@@ -1,0 +1,2530 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.service.extra.mall.mapper.ManageSystemMapper">
+
+
+	<!-- 添加系统日志接口 -->
+	<insert id="doMsAddSysOperateLog">
+		INSERT INTO t_sys_operate_log
+		VALUES
+			(
+				UUID(),
+				#{uId},
+				NOW(),
+				#{solType},
+				#{solObject},
+				#{solTable}
+			)
+	</insert>
+	
+	<!-- 管理后台登录接口 -->
+	<resultMap type="User" id="doMsLogin">
+		<id column="U_ID" property="uId" />
+		<result column="U_TRUE_NAME" property="uTrueName"/>
+		<result column="S_ID" property="sId"/>
+		<association property="userRole" javaType="UserRole">
+			<result column="UR_NAME" property="urName" />
+		</association>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+			<result column="S_CHECKED" property="sChecked" />
+		</association>
+	</resultMap>
+	<select id="doMsLogin" resultMap="doMsLogin">
+		SELECT
+			t1.U_ID,
+			t1.U_TRUE_NAME,
+			t2.UR_NAME,
+			t1.S_ID,
+			t3.S_NAME,
+			t3.S_CHECKED
+		FROM
+			(
+				SELECT
+					U_ID,
+					UR_ID,
+					U_ACCOUNT,
+					U_PASSWORD,
+					U_TRUE_NAME,
+					S_ID
+				FROM
+					t_user
+				WHERE
+					U_ACCOUNT = #{account}
+				AND
+					U_PASSWORD = #{password}
+			) t1
+		LEFT JOIN t_user_role t2 ON t1.UR_ID = t2.UR_ID
+		LEFT JOIN t_store t3 ON t1.S_ID = t3.S_ID
+	</select>
+	
+	<!-- 获取系统公告列表接口 -->
+	<resultMap type="SysNotice" id="doMsGetSysNoticeList">
+		<id column="SN_ID" property="snId" />
+		<result column="SN_TITLE" property="snTitle"/>
+		<result column="SN_CONTENT" property="snContent"/>
+		<result column="SN_CREATE_TIME" property="snCreateTime"/>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetSysNoticeList" resultMap="doMsGetSysNoticeList">
+		SELECT
+			t1.SN_ID,
+			t1.SN_TITLE,
+			t1.SN_CONTENT,
+			t2.U_TRUE_NAME,
+			t1.SN_CREATE_TIME
+		FROM
+			(
+				SELECT
+					SN_ID,
+					SN_TITLE,
+					SN_CONTENT,
+					U_ID,
+					SN_CREATE_TIME
+				FROM
+					t_sys_notice
+			) t1
+		LEFT JOIN t_user t2 ON t1.U_ID = t2.U_ID
+	</select>
+	
+	<!-- 根据uId获取用户身份 -->
+	<select id="msGetUserRoleByUid" resultType="UserRole">
+		SELECT
+			t2.UR_NAME AS urName
+		FROM
+			(
+				SELECT
+					U_ID,
+					UR_ID
+				FROM
+					t_user
+				WHERE
+					U_ID = #{uId}
+			) t1
+		LEFT JOIN t_user_role t2 ON t1.UR_ID = t2.UR_ID
+	</select>
+	<!-- 获取平台总用户数量 -->
+	<select id="msGetTotalUserNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user
+	</select>
+	<!-- 获取平台已入驻商户数量 -->
+	<select id="msGetStoreUserNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			(
+				SELECT
+					U_ID,
+					UR_ID,
+					S_ID
+				FROM
+					t_user
+				WHERE
+					UR_ID IN (
+						SELECT
+							UR_ID
+						FROM
+							t_user_role
+						WHERE
+							UR_NAME LIKE '%商户'
+					)
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		WHERE
+			t2.S_CHECKED = 1
+	</select>
+	<!-- 获取平台用户数量 -->
+	<select id="msGetNormalUserNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user
+		WHERE
+			UR_ID = (
+				SELECT
+					UR_ID
+				FROM
+					t_user_role
+				WHERE
+					UR_NAME = '平台用户'
+			)
+	</select>
+	<!-- 获取平台需求总数量 -->
+	<select id="msGetTotalRequirementNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user_requirement
+	</select>
+	<!-- 获取平台今日发布的需求数量 -->
+	<select id="msGetTodayRequirementNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user_requirement
+		WHERE
+			TO_DAYS(NOW()) - TO_DAYS(UR_CREATE_TIME) = 0
+	</select>
+	<!-- 获取平台昨日发布的需求数量 -->
+	<select id="msGetYestodayRequirementNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user_requirement
+		WHERE
+			TO_DAYS(NOW()) - TO_DAYS(UR_CREATE_TIME) = 1
+	</select>
+	<!-- 获取平台今日已完成的需求数量 -->
+	<select id="msGetTodayOverRequirementNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_requirement_order
+		WHERE
+			RO_STATUS IN (2, 6)
+		AND TO_DAYS(NOW()) - TO_DAYS(RO_OVER_TIME) = 0
+	</select>
+	<!-- 获取平台商品总数量 -->
+	<select id="msGetTotalProductNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product
+		WHERE
+			P_DEL = 0
+	</select>
+	<!-- 获取平台今日发布的商品数量 -->
+	<select id="msGetTodayProductNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product
+		WHERE
+			P_DEL = 0
+		AND TO_DAYS(NOW()) - TO_DAYS(P_CREATE_TIME) = 0 
+	</select>
+	<!-- 获取平台昨日发布的商品数量 -->
+	<select id="msGetYestodayProductNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product
+		WHERE
+			P_DEL = 0
+		AND TO_DAYS(NOW()) - TO_DAYS(P_CREATE_TIME) = 1 
+	</select>
+	<!-- 获取平台今日已完成的订单总数量 -->
+	<select id="msGetTodayOverOrderNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product_order
+		WHERE
+			PO_STATUS IN (3, 4)
+		AND TO_DAYS(NOW()) - TO_DAYS(PO_OVER_TIME) = 0 
+	</select>
+	<!-- 获取平台今日已退款的订单总数量 -->
+	<select id="msGetTodayBackOrderNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product_order
+		WHERE
+			PO_STATUS = 6
+		AND TO_DAYS(NOW()) - TO_DAYS(PO_OVER_TIME) = 0 
+	</select>
+	<!-- 获取平台待审核商户的数量 -->
+	<select id="msGetUncheckStoreNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_store
+		WHERE
+			S_CHECKED = 0
+	</select>
+	<!-- 获取平台待审核商品的数量 -->
+	<select id="msGetUncheckProductNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product
+		WHERE
+			P_CHECKED = 0
+		AND P_DEL = 0
+	</select>
+	<!-- 获取平台待审核提现请求的数量 -->
+	<select id="msGetUncheckApplyToCashNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user_to_cash_record
+		WHERE
+			UTCR_STATUS = 0
+	</select>
+	
+	<!-- 根据条件获取店铺列表接口 -->
+	<resultMap type="Store" id="doMsGetStoreList">
+		<id column="S_ID" property="sId" />
+		<result column="S_TYPE" property="sType"/>
+		<result column="S_NAME" property="sName"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="S_DESCRIBE" property="sDescribe"/>
+		<result column="S_LEADER" property="sLeader"/>
+		<result column="S_LEADER_IDCARD" property="sLeaderIdCard"/>
+		<result column="S_LEGAL" property="sLegal"/>
+		<result column="S_LEGAL_IDCARD" property="sLegalIdCard"/>
+		<result column="S_LEADER_PIC" property="sLeaderPic"/>
+		<result column="S_LEGAL_PIC" property="sLegalPic"/>
+		<result column="S_BUSINESS_LICENSE_PIC" property="sBuinessLicensePic"/>
+		<result column="S_TEL" property="sTel"/>
+		<result column="S_CREATE_TIME" property="sCreateTime"/>
+		<result column="S_ADDRESS" property="sAddress"/>
+		<result column="S_LON" property="sLon"/>
+		<result column="S_LAT" property="sLat"/>
+		<result column="S_WEIGHT" property="sWeight"/>
+		<result column="S_BOOTH_NUM" property="sBoothNum"/>
+		<result column="S_LEFT_BOOTH_NUM" property="sLeftBoothNum"/>
+		<result column="S_REQUIREMENT_SERVICE_CHARGE" property="sRequirementServiceCharge"/>
+		<result column="S_ORDER_LIMINT" property="sOrderLimint"/>
+		<result column="S_PRODUCT_SERVICE_CHARGE" property="sProductServiceCharge"/>
+		<result column="S_CHECKED" property="sChecked"/>
+		<result column="S_LEVEL" property="sLevel"/>
+		<result column="S_CHECKED_TIME" property="sCheckedTime"/>
+		<result column="S_CHECKED_OPINION" property="sCheckedOpinion"/>
+		<association property="areaCode" javaType="AreaCode">
+			<result column="AC_CITY" property="acCity" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetStoreList" resultMap="doMsGetStoreList">
+		SELECT
+			t1.S_ID,
+			t1.S_TYPE,
+			t1.S_NAME,
+			t1.P_TAG,
+			t1.S_DESCRIBE,
+			t2.AC_CITY,
+			t1.S_LEADER,
+			t1.S_LEADER_IDCARD,
+			t1.S_LEGAL,
+			t1.S_LEGAL_IDCARD,
+			t1.S_LEADER_PIC,
+			t1.S_LEGAL_PIC,
+			t1.S_BUSINESS_LICENSE_PIC,
+			t1.S_TEL,
+			t1.S_CREATE_TIME,
+			t1.S_ADDRESS,
+			t1.S_LON,
+			t1.S_LAT,
+			t1.S_WEIGHT,
+			t1.S_BOOTH_NUM,
+			t1.S_LEFT_BOOTH_NUM,
+			t1.S_REQUIREMENT_SERVICE_CHARGE,
+			t1.S_ORDER_LIMINT,
+			t1.S_PRODUCT_SERVICE_CHARGE,
+			t1.S_CHECKED,
+			t1.S_LEVEL,
+			t3.U_TRUE_NAME,
+			t1.S_CHECKED_TIME,
+			t1.S_CHECKED_OPINION
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_store
+				WHERE
+					S_ID != ''
+				<if test="isRecommend != '' and isRecommend == 1">
+					AND S_ID IN (SELECT S_ID FROM t_recommend_store)
+				</if>	
+				<if test="isRecommend != '' and isRecommend == 0">
+					AND S_ID NOT IN (SELECT S_ID FROM t_recommend_store)
+				</if>
+				<if test="sName !=null and sName != ''">
+					AND S_NAME LIKE '%${sName}%'
+				</if>
+				<if test="sType !=null and sType != ''">
+					AND S_TYPE = #{sType}
+				</if>
+				<if test="sLeader !=null and sLeader != ''">
+					AND S_LEADER LIKE '%${sLeader}%'
+				</if>
+				<if test="sChecked !=null and sChecked != ''">
+					AND S_CHECKED = #{sChecked}
+				</if>
+				ORDER BY
+					S_WEIGHT DESC
+				LIMIT #{start},
+				#{end}
+			) t1
+		LEFT JOIN t_areacode t2 ON t1.AC_ID = t2.AC_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+	</select>
+	<!-- 获取满足条件的店铺总数接口 -->
+	<select id="msGetStoreListSatisfyConditionCount" resultType="int">
+				SELECT
+					COUNT(0)
+				FROM
+					t_store
+				WHERE
+					S_ID != ''
+				<if test="isRecommend != '' and isRecommend == 1">
+					AND S_ID IN (SELECT S_ID FROM t_recommend_store)
+				</if>	
+				<if test="isRecommend != '' and isRecommend == 0">
+					AND S_ID NOT IN (SELECT S_ID FROM t_recommend_store)
+				</if>
+				<if test="sName !=null and sName != ''">
+					AND S_NAME LIKE '%${sName}%'
+				</if>
+				<if test="sType !=null and sType != ''">
+					AND S_TYPE = #{sType}
+				</if>
+				<if test="sLeader !=null and sLeader != ''">
+					AND S_LEADER LIKE '%${sLeader}%'
+				</if>
+				<if test="sChecked !=null and sChecked != ''">
+					AND S_CHECKED = #{sChecked}
+				</if>
+	</select>
+	
+	<!-- 根据P_TAG获取图片相关信息 -->
+	<select id="msGetPicByPTag" resultType="Pic">
+		SELECT
+			P_FILE_NAME AS pFileName,
+			P_NAME AS pName,
+			P_NO AS pNo,
+			P_JUMP AS pJump
+		FROM
+			t_pic
+		WHERE
+			P_TAG = #{pTag}
+		ORDER BY P_NO ASC
+	</select>
+	
+	<!-- 获取特定店铺钱包信息接口 -->
+	<select id="msGetStoreWalletListBySId" resultType="UserWallet">
+		SELECT
+			UW_LEFT_MONEY AS uwLeftMoney,
+			UW_DEPOSIT AS uwDeposit
+		FROM
+			t_user_wallet
+		WHERE
+			S_ID = #{sId}
+	</select>
+	<!-- 获取特定店铺已发布的商品的总数 -->
+	<select id="msGetStoreProductNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product
+		WHERE
+			S_ID = #{sId}
+		AND P_DEL = 0
+	</select>
+	
+	<!-- 修改店铺审核状态接口 -->
+	<update id="doMsChangeStoreCheckStatus">
+		UPDATE t_store
+			SET S_CHECKED = #{sChecked},
+			U_ID = #{uId},
+			S_CHECKED_TIME = NOW(),
+			S_CHECKED_OPINION = #{sCheckedOpinion}
+			WHERE
+				S_ID = #{sId}
+	</update>
+	
+	
+	<!-- 修改商品推荐展位状态 -->
+	<update id="msChangeProductHaveBoothStatus">
+		UPDATE t_product
+		SET P_HAVE_BOOTH = 0
+		WHERE
+			S_ID = #{sId}
+	</update>
+	<!-- 添加或修改店铺配置信息接口 -->
+	<update id="doMsAddOrChangeStoreConfigInfo">
+		UPDATE t_store
+			SET S_ORDER_LIMINT = #{sOrderLimint},
+			S_REQUIREMENT_SERVICE_CHARGE = #{requirementServiceCharge},
+			S_PRODUCT_SERVICE_CHARGE = #{productServiceCharge},
+			S_LEVEL = #{sLevel},
+			S_WEIGHT = #{sWeight},
+			S_BOOTH_NUM = #{sBoothNum},
+			S_LEFT_BOOTH_NUM = #{sLeftBoothNum}
+			WHERE
+				S_ID = #{sId}
+	</update>
+	
+	<!-- 获取特定店铺的审核状态 -->
+	<select id="msGetStoreCheckedStatus" resultType="Store">
+		SELECT
+			S_CHECKED AS sChecked,
+			S_NAME AS sName
+		FROM
+			t_store
+		WHERE
+			S_ID = #{sId}
+	</select>
+	
+	<!-- 获取商品大类列表 -->
+	<select id="doMsGetProductTypeList" resultType="ProductType">
+		SELECT
+			PT_ID AS ptId,
+			PT_NAME AS ptName
+		FROM
+			t_product_type
+	</select>
+	
+	<!-- 根据条件获取商品列表接口 -->
+	<resultMap type="Product" id="doMsGetProductList">
+		<id column="P_ID" property="pId" />
+		<result column="P_NAME" property="pName"/>
+		<result column="P_BRAND" property="pBrand"/>
+		<result column="P_DESCRIBE" property="pDescribe"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_CREATE_TIME" property="pCreateTime"/>
+		<result column="PTD_ID" property="ptdId"/>
+		<result column="P_DEL" property="pDel"/>
+		<result column="P_CHECKED" property="pChecked"/>
+		<result column="P_WEIGHT" property="pWeight"/>
+		<result column="P_HAVE_BOOTH" property="pHaveBooth"/>
+		<result column="P_CHECKED_TIME" property="pCheckedTime"/>
+		<result column="P_CHECKED_OPINION" property="pCheckedOpinion"/>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+		</association>
+		<association property="productTypeDetail" javaType="ProductTypeDetail">
+			<result column="PTD_NAME" property="ptdName" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetProductList" resultMap="doMsGetProductList">
+		SELECT
+			t1.P_ID,
+			t2.S_NAME,
+			t1.P_NAME,
+			t1.P_BRAND,
+			t1.P_DESCRIBE,
+			t1.P_TAG,
+			t1.P_ORIGINAL_PRICE,
+			t1.P_NOW_PRICE,
+			t1.P_CREATE_TIME,
+			t1.PTD_ID,
+			t3.PTD_NAME,
+			t1.P_DEL,
+			t1.P_CHECKED,
+			t1.P_WEIGHT,
+			t1.P_HAVE_BOOTH,
+			t4.U_TRUE_NAME,
+			t1.P_CHECKED_TIME,
+			t1.P_CHECKED_OPINION
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_product
+				WHERE
+					P_ID != ''
+				<if test="pName !=null and pName != ''">
+					AND P_NAME LIKE '%${pName}%'
+				</if>
+				<if test="pHaveBooth !=null and pHaveBooth != ''">
+					AND P_HAVE_BOOTH = #{pHaveBooth}
+				</if>
+				<if test="ptId !=null and ptId != ''">
+					AND PTD_ID LIKE '${ptId}%'
+				</if>
+				<if test="pChecked !=null and pChecked != ''">
+					AND P_CHECKED = #{pChecked}
+				</if>
+				<if test="userType !=null and userType == 1">
+					AND P_DEL = 0
+				</if>
+				ORDER BY
+					P_WEIGHT DESC
+				LIMIT #{start},
+				#{end}
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		LEFT JOIN t_product_type_detail t3 ON t1.PTD_ID = t3.PTD_ID
+		LEFT JOIN t_user t4 ON t1.U_ID = t4.U_ID
+	</select>
+	
+	<!-- 获取满足条件的商品总数接口 -->
+	<select id="msGetProductListSatisfyConditionCount" resultType="int">
+				SELECT
+					COUNT(0)
+				FROM
+					t_product
+				WHERE
+					P_ID != ''
+				<if test="pName !=null and pName != ''">
+					AND P_NAME LIKE '%${pName}%'
+				</if>
+				<if test="pHaveBooth !=null and pHaveBooth != ''">
+					AND P_HAVE_BOOTH = #{pHaveBooth}
+				</if>
+				<if test="ptId !=null and ptId != ''">
+					AND PTD_ID LIKE '${ptId}%'
+				</if>
+				<if test="pChecked !=null and pChecked != ''">
+					AND P_CHECKED = #{pChecked}
+				</if>
+				<if test="userType !=null and userType == 1">
+					AND P_DEL = 0
+				</if>
+	</select>
+	
+	<!-- 修改商品审核状态接口 -->
+	<update id="doMsChangeProductCheckStatus">
+		UPDATE t_product
+		SET P_CHECKED = #{pChecked},
+		U_ID = #{uId},
+		P_CHECKED_TIME = NOW(),
+ 		P_CHECKED_OPINION = #{pCheckedOpinion}
+		WHERE
+			P_ID = #{pId}
+	</update>
+	
+	<!-- 添加或修改商品配置信息接口 -->
+	<update id="msAddOrChangeProductConfigInfo">
+		UPDATE t_product
+		SET P_WEIGHT = #{pWeight}
+		WHERE
+			P_ID = #{pId}
+	</update>
+	
+	<!-- 获取特定商品的审核状态 -->
+	<select id="msGetProductCheckedStatus" resultType="Product">
+		SELECT
+			P_CHECKED AS pChecked,
+			P_NAME AS pName
+		FROM
+			t_product
+		WHERE
+			P_ID = #{pId}
+	</select>
+	
+	<!-- （系统设置）根据条件获取系统公告列表接口 -->
+	<resultMap type="SysNotice" id="doMsSysSettingGetSysNoticeList">
+		<id column="SN_ID" property="snId" />
+		<result column="SN_TITLE" property="snTitle"/>
+		<result column="SN_CONTENT" property="snContent"/>
+		<result column="SN_CREATE_TIME" property="snCreateTime"/>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsSysSettingGetSysNoticeList" resultMap="doMsSysSettingGetSysNoticeList">
+		SELECT
+			t1.SN_ID,
+			t1.SN_TITLE,
+			t1.SN_CONTENT,
+			t2.U_TRUE_NAME,
+			t1.SN_CREATE_TIME
+		FROM
+			(
+				SELECT
+					SN_ID,
+					SN_TITLE,
+					SN_CONTENT,
+					U_ID,
+					SN_CREATE_TIME
+				FROM
+					t_sys_notice
+			) t1
+		LEFT JOIN t_user t2 ON t1.U_ID = t2.U_ID
+		WHERE
+			t1.SN_ID != ''
+		AND t1.SN_TITLE LIKE '%${snTitle}%'
+		AND t2.U_TRUE_NAME LIKE '%${uTrueName}%'
+		ORDER BY t1.SN_CREATE_TIME DESC
+	</select>
+	
+	<!-- (系统设置)发布系统公告接口 -->
+	<insert id="doMsSysSettingAddSysNotice">
+		INSERT INTO t_sys_notice
+		VALUES
+			(
+				#{uuid},
+				#{snTitle}, 
+				#{snContent}, 
+				#{uId}, 
+				NOW()
+			)
+	</insert>
+	
+	<!-- (系统设置)修改系统公告接口 -->
+	<update id="doMsSysSettingChangeSysNotice">
+		UPDATE t_sys_notice
+		SET SN_TITLE = #{snTitle},
+		SN_CONTENT = #{snContent},
+		U_ID = #{uId}
+		WHERE
+			SN_ID = #{snId}
+	</update>
+	
+	<!-- (系统设置)根据条件获取系统操作日志列表接口 -->
+	<resultMap type="SysOperateLog" id="doMsSysSettingGetSysOperateLogList">
+		<id column="SOL_ID" property="solId" />
+		<result column="SOL_CREATE_TIME" property="solCreateTime"/>
+		<result column="SOL_TYPE" property="solType"/>
+		<result column="SOL_OBJECT" property="solObject"/>
+		<result column="SOL_TABLE" property="solTable"/>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsSysSettingGetSysOperateLogList" resultMap="doMsSysSettingGetSysOperateLogList">
+		SELECT
+			t1.SOL_ID,
+			t2.U_TRUE_NAME,
+			t1.SOL_CREATE_TIME,
+			t1.SOL_TYPE,
+			t1.SOL_OBJECT,
+			t1.SOL_TABLE
+		FROM
+			(
+				SELECT
+					SOL_ID,
+					U_ID,
+					SOL_CREATE_TIME,
+					SOL_TYPE,
+					SOL_OBJECT,
+					SOL_TABLE
+				FROM
+					t_sys_operate_log
+				WHERE
+					SOL_ID != ''
+				<if test="solType !=null and solType != ''">
+					AND SOL_TYPE = #{solType}
+				</if>
+				ORDER BY
+					SOL_CREATE_TIME DESC
+				LIMIT #{start},
+				#{end}
+			) t1
+		LEFT JOIN t_user t2 ON t1.U_ID = t2.U_ID
+	</select>
+	<!-- (系统设置)获取满足条件的系统操作日志的总数 -->
+	<select id="msSysSettingGetSysOperateLogCount" resultType="int">
+		SELECT
+					COUNT(0)
+				FROM
+					t_sys_operate_log
+				WHERE
+					SOL_ID != ''
+				<if test="solType !=null and solType != ''">
+					AND SOL_TYPE = #{solType}
+				</if>		
+	</select>
+	
+	<!-- (系统设置)根据条件获取反馈意见列表接口 -->
+	<resultMap type="FeedBack" id="doMsSysSettingGetFeedbackList">
+		<id column="F_ID" property="fId" />
+		<result column="F_TYPE" property="fType"/>
+		<result column="F_CONTENT" property="fContent"/>
+		<result column="F_CREATE_TIME" property="fCreateTime"/>
+		<result column="F_APP_TYPE" property="fAppType"/>
+		<association property="user" javaType="User">
+			<result column="U_ACCOUNT" property="uAccount" />
+			<result column="U_NICKNAME" property="uNickName" />
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsSysSettingGetFeedbackList" resultMap="doMsSysSettingGetFeedbackList">
+		SELECT
+			t1.F_ID,
+			t1.F_TYPE,
+			t1.F_CONTENT,
+			t2.U_ACCOUNT,
+			t2.U_NICKNAME,
+			t2.U_TRUE_NAME,
+			t1.F_CREATE_TIME,
+			t1.F_APP_TYPE
+		FROM
+			(SELECT
+				*
+			FROM
+				t_feedback
+			WHERE
+				F_ID != ''
+			<if test="fContent !=null and fContent != ''">
+				AND F_CONTENT LIKE '%${fContent}%'
+			</if>	
+			<if test="fAppType !=null and fAppType != ''">
+				AND F_APP_TYPE = #{fAppType}
+			</if>
+			<if test="fType !=null and fType != ''">
+				AND F_TYPE = #{fType}
+			</if>		
+			ORDER BY
+				F_CREATE_TIME DESC
+			LIMIT #{start},
+			#{end}
+			) t1
+		LEFT JOIN t_user t2 ON t1.U_ID = t2.U_ID
+	</select>
+	<!-- (系统设置)根据条件获取反馈意见列表总数 -->
+	<select id="msSysSettingGetFeedbackCount" resultType="int">
+			SELECT
+				COUNT(0)
+			FROM
+				t_feedback
+			WHERE
+				F_ID != ''
+			<if test="fContent !=null and fContent != ''">
+				AND F_CONTENT LIKE '%${fContent}%'
+			</if>	
+			<if test="fAppType !=null and fAppType != ''">
+				AND F_APP_TYPE = #{fAppType}
+			</if>
+			<if test="fType !=null and fType != ''">
+				AND F_TYPE = #{fType}
+			</if>		
+	</select>
+	
+	<!-- (系统设置)获取用户角色列表接口 -->
+	<select id="doMsSysSettingGetUserRoleList" resultType="UserRole">
+		SELECT
+			UR_ID AS urId,
+			UR_NAME AS urName
+		FROM
+			t_user_role
+	</select>
+	
+	<!-- (系统设置)根据条件获取用户列表接口 -->
+	<resultMap type="User" id="doMsSysSettingGetUserList">
+		<id column="U_ID" property="uId" />
+		<result column="U_ACCOUNT" property="uAccount"/>
+		<result column="U_PASSWORD" property="uPassword"/>
+		<result column="U_NICKNAME" property="uNickName"/>
+		<result column="U_SEX" property="uSex"/>
+		<result column="U_EMAIL" property="uEmail"/>
+		<result column="U_BIRTHDAY" property="uBirthday"/>
+		<result column="U_TEL" property="uTel"/>
+		<result column="U_TRUE_NAME" property="uTrueName"/>
+		<result column="U_CREATE_TIME" property="uCreateTime"/>
+		<association property="userRole" javaType="UserRole">
+			<result column="UR_NAME" property="urName" />
+		</association>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+		</association>
+	</resultMap>
+	<select id="doMsSysSettingGetUserList" resultMap="doMsSysSettingGetUserList">
+		SELECT
+			t1.U_ID,
+			t2.UR_NAME,
+			t1.U_ACCOUNT,
+			t1.U_PASSWORD,
+			t1.U_NICKNAME,
+			t1.U_SEX,
+			t1.U_EMAIL,
+			t1.U_BIRTHDAY,
+			t1.U_TEL,
+			t1.U_TRUE_NAME,
+			t3.S_NAME,
+			t1.U_CREATE_TIME
+		FROM
+			(
+				SELECT
+					U_ID,
+					UR_ID,
+					U_ACCOUNT,
+					U_PASSWORD,
+					U_NICKNAME,
+					U_SEX,
+					U_EMAIL,
+					U_BIRTHDAY,
+					U_TEL,
+					U_TRUE_NAME,
+					S_ID,
+					U_CREATE_TIME
+				FROM
+					t_user
+				WHERE
+					U_ID != ''
+				<if test="uAccount !=null and uAccount != ''">
+					AND U_ACCOUNT LIKE '%${uAccount}%'
+				</if>
+				<if test="uTrueName !=null and uTrueName != ''">
+					AND U_TRUE_NAME LIKE '%${uTrueName}%'
+				</if>
+				<if test="uTel !=null and uTel != ''">
+					AND U_TEL LIKE '%${uTel}%'
+				</if>
+				<if test="urId !=null and urId != ''">
+					AND UR_ID = #{urId}
+				</if>
+				ORDER BY
+				U_CREATE_TIME DESC
+				LIMIT #{start},
+				#{end}
+			) t1
+		LEFT JOIN t_user_role t2 ON t1.UR_ID = t2.UR_ID
+		LEFT JOIN t_store t3 ON t1.S_ID = t3.S_ID
+	</select>
+	<!-- (系统设置)获取满足条件的用户列表总数 -->
+	<select id="msSysSettingGetUserCount" resultType="int">
+				SELECT
+					COUNT(0)
+				FROM
+					t_user
+				WHERE
+					U_ID != ''
+				<if test="uAccount !=null and uAccount != ''">
+					AND U_ACCOUNT LIKE '%${uAccount}%'
+				</if>
+				<if test="uTrueName !=null and uTrueName != ''">
+					AND U_TRUE_NAME LIKE '%${uTrueName}%'
+				</if>
+				<if test="uTel !=null and uTel != ''">
+					AND U_TEL LIKE '%${uTel}%'
+				</if>
+				<if test="urId !=null and urId != ''">
+					AND UR_ID = #{urId}
+				</if>
+	</select>
+	
+	<!-- (系统设置)添加用户信息接口 -->
+	<insert id="doMsSysSettingAddUserInfo">
+		INSERT INTO t_user
+		VALUES
+			(
+				#{uuId},
+				'd8aa062e-5263-11e8-8390-4ccc6a70ac67',
+				'',
+				'',
+				#{uAccount},
+				#{uPassword},
+				#{uNickName},
+				#{uSex},
+				#{uEmail},
+				'',
+				UUID(),
+				#{uTel},
+				'',
+				#{uTrueName},
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
+				NOW()
+			)
+	</insert>
+	
+	<!-- (系统设置)修改用户信息接口 -->
+	<update id="doMsSysSettingChangeUserInfo">
+		UPDATE t_user
+		SET U_ACCOUNT = #{uAccount}, 
+		U_PASSWORD = #{uPassword},
+		U_NICKNAME = #{uNickName},
+		U_SEX = #{uSex}, 
+		U_EMAIL = #{uEmail},
+		U_TEL = #{uTel}, 
+		U_TRUE_NAME = #{uTrueName}
+		WHERE
+			U_ID = #{uId}
+	</update>
+	
+	<!-- (系统设置)获取全国省份列表接口 -->
+	<select id="msGetProvinceListOfArea" resultType="AreaCode">
+		SELECT
+			AC_ID AS acId,
+			AC_PROVINCE AS acProvince
+		FROM
+			t_areacode
+		WHERE
+			AC_PROVINCE != ''
+		AND AC_ID != '1'
+	</select>
+	<!-- (系统设置)获取特定省份下城市列表接口 -->
+	<select id="msGetCityListOfProvince" resultType="AreaCode">
+		SELECT
+			AC_ID AS acId,
+			AC_CITY AS acCity
+		FROM
+			t_areacode
+		WHERE
+		AC_PARENT = #{acId}
+	</select>
+	
+	<!-- (系统设置)根据城市名称获取城市相关数据接口 -->
+	<select id="doMsSysSettingGetCityInfoByCityName" resultType="AreaCode">
+		SELECT
+			AC_ID AS acId,
+			AC_CODE AS acCode,
+			AC_PARENT AS acParent,
+			AC_CITY AS acCity
+		FROM
+			t_areacode
+		WHERE
+			AC_CITY = #{acCity}
+	</select>
+	<!-- (系统设置)获取城市所属的省份接口 -->
+	<select id="msGetProvinceByCityName" resultType="AreaCode">
+		SELECT
+			AC_PROVINCE AS acProvince
+		FROM
+			t_areacode
+		WHERE
+			AC_ID = #{acId}
+	</select>
+	<!-- (系统设置)根据acId获取已开通的城市数据接口 -->
+	<select id="msGetOpenCityInfoByAcId" resultType="OpenCity">
+		SELECT
+			OC_ID AS ocId,
+			OC_IS_HOT AS ocIsHot
+		FROM
+			t_open_city
+		WHERE
+			AC_ID = #{acId}
+	</select>
+	<!-- (系统设置)根据acId获取已开通的城市内已入驻的商家的个数接口 -->
+	<select id="msGetStoreNumFromOpenCityByAcId" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_store
+		WHERE
+			AC_ID = #{acId}
+		AND S_CHECKED = 1
+	</select>
+	
+	<!-- (系统设置)修改已开通城市的信息接口 -->
+	<update id="msChangeOpenCityInfoByOcId">
+		UPDATE t_open_city
+		SET OC_IS_HOT = #{ocIsHot}
+		WHERE
+			OC_ID = #{ocId}
+	</update>
+	<!-- (系统设置)删除已开通城市接口 -->
+	<delete id="msDelOpenCityByOcId">
+		DELETE
+		FROM
+			t_open_city
+		WHERE
+			OC_ID = #{ocId}
+	</delete>
+	<!-- (系统设置)新增已开通服务的城市接口 -->
+	<insert id="msAddOpenCityInfo">
+		INSERT INTO t_open_city
+		VALUES
+			(
+				#{uuId},
+				#{acId},
+				#{ocIsHot}, 
+				NOW()
+			)
+	</insert>
+	
+	<!-- (系统设置)获取某商品类别下第一级商品小类列表接口 -->
+	<resultMap type="ProductTypeDetail" id="msGetFirstPTDByPtId">
+		<id column="PTD_ID" property="ptdId" />
+		<result column="PT_ID" property="ptId"/>
+		<result column="PTD_NAME" property="ptdName"/>
+		<result column="PTD_FATHER_ID" property="ptdFatherId"/>
+		<result column="P_TAG" property="pTag"/>
+		<association property="productType" javaType="ProductType">
+			<result column="PT_NAME" property="ptName" />
+		</association>
+		<association property="pic" javaType="Pic">
+			<result column="P_NAME" property="pName" />
+		</association>
+	</resultMap>
+	<select id="msGetFirstPTDByPtId" resultMap="msGetFirstPTDByPtId">
+		SELECT
+			t1.PTD_ID,
+			t1.PT_ID,
+			t2.PT_NAME,
+			t1.PTD_NAME,
+			t1.PTD_FATHER_ID,
+			t1.P_TAG,
+			t3.P_NAME
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_product_type_detail
+				WHERE
+					PTD_FATHER_ID = #{typeId}
+			) t1
+		LEFT JOIN t_product_type t2 ON t1.PT_ID = t2.PT_ID
+		LEFT JOIN t_pic t3 ON t1.P_TAG = t3.P_TAG
+	</select>
+	<!-- (系统设置)根据ptdId获取商品小类名称 -->
+	<select id="msGetProductTypeDetailNameByPtdId" resultType="ProductTypeDetail">
+		SELECT
+			PTD_NAME AS ptdName
+		FROM
+			t_product_type_detail
+		WHERE
+			PTD_ID = #{ptdId}
+	</select>
+	
+	<!-- （系统设置）添加商品大类接口 -->
+	<insert id="doMsAddProductTypeInfo">
+		INSERT INTO t_product_type
+		VALUES
+			(
+				#{ptId}, 
+				#{ptName}
+			)
+	</insert>
+	
+	<!-- (系统设置)修改商品小类接口 -->
+	<update id="doMsChangeProductTypeDetailInfo">
+		UPDATE t_product_type_detail
+			SET PTD_NAME = #{ptdName}
+			WHERE
+				PTD_ID = #{ptdId}
+	</update>
+	
+	<!-- （系统设置）根据pTag修改图片名称 -->
+	<update id="msChangePNameByPTag">
+		UPDATE t_pic
+			SET P_NAME = #{pName}
+			WHERE
+				P_TAG = #{pTag}
+	</update>
+	
+	<!-- （系统设置）添加图片接口 -->
+	<insert id="msAddPicInfo">
+		INSERT INTO t_pic
+		VALUES
+			(
+				UUID(), 
+				#{pFileName},
+				#{pName},
+				#{pNo},
+				#{pTag},
+				NOW(),
+				''
+			)
+	</insert>
+	
+	<!-- (系统设置)添加商品小类接口 -->
+	<insert id="doMsAddProductTypeDetailInfo">
+		INSERT INTO t_product_type_detail
+		VALUES
+			(
+				#{ptdId},
+				#{ptId},
+				#{ptdName},
+				#{ptdFatherId},
+				#{pTag}
+			)
+	</insert>
+	
+	<!-- (系统设置)根据条件查询商品属性列表接口 -->
+	<select id="doMsGetProductPropertyList" resultType="ProductProperty">
+		SELECT
+			PP_ID AS ppId,
+			PP_NAME AS ppName,
+			PP_VALUE AS ppValue,
+			PP_TAG AS ppTag,
+			PP_CHOSE_TYPE AS ppChoseType,
+			PP_REQUIRED AS ppRequired
+		FROM
+			t_product_property
+		WHERE PP_ID != ''
+		<if test="ppName !=null and ppName != ''">
+			AND PP_NAME LIKE '%${ppName}%'
+		</if>
+		<if test="ppValue !=null and ppValue != ''">
+			AND PP_VALUE LIKE '%${ppValue}%'
+		</if>
+		<if test="ppTag !=null and ppTag != ''">
+			AND PP_TAG = #{ppTag}
+		</if>		
+		LIMIT #{start},
+ 		#{end}
+	</select>
+	<!-- （系统设置） 获取满足条件的商品属性的总数-->
+	<select id="msGetProductPropertyCount" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product_property
+		WHERE PP_ID != ''
+		<if test="ppName !=null and ppName != ''">
+			AND PP_NAME LIKE '%${ppName}%'
+		</if>
+		<if test="ppValue !=null and ppValue != ''">
+			AND PP_VALUE LIKE '%${ppValue}%'
+		</if>
+		<if test="ppTag !=null and ppTag != ''">
+			AND PP_TAG = #{ppTag}
+		</if>		
+	</select>
+	
+	<!-- (系统设置)添加商品属性接口 -->
+	<insert id="doMsAddProductProperty">
+		INSERT INTO t_product_property
+		VALUES
+			(
+				UUID(),
+				#{ppName},
+				#{ppValue},
+				#{ppTag},
+				#{ppChoseType},
+				#{ppRequired}
+			)
+	</insert>
+	
+	<!-- (系统设置)根据商品小类标识搜索商品小类信息接口 -->
+	<select id="msGetProductTypeDetailInfoByPtdId" resultType="ProductTypeDetail">
+		SELECT
+			PTD_NAME AS ptdName
+		FROM
+			t_product_type_detail
+		WHERE
+			PTD_ID = #{ptdId}
+		AND PTD_ID NOT IN (
+			SELECT
+				PTD_FATHER_ID
+			FROM
+				t_product_type_detail
+		)
+	</select>
+	<!-- (系统设置)根据商品小类标识搜索其关联的商品属性信息 -->
+	<select id="msGetProductPropertiesByPtdId" resultType="ProductDetailTypeRelationProductProperty">
+		SELECT
+			PP_TAG AS ppTag
+		FROM
+			t_product_detail_type_relation_product_property
+		WHERE
+			PTD_ID = #{ptdId}
+	</select>
+	<!-- (系统设置)删除特定商品类别所有的关联商品属性项  -->
+	<delete id="msDelProductTypeRelationProperties">
+		DELETE
+		FROM
+			t_product_detail_type_relation_product_property
+		WHERE
+			PTD_ID = #{ptdId}
+	</delete>
+	<!-- (系统设置)添加特定商品类别关联的属性  -->
+	<insert id="msAddProductTypeRelationProperty">
+		INSERT INTO t_product_detail_type_relation_product_property
+		VALUES
+			(UUID(), #{ppTag}, #{ptdId})
+	</insert>
+	
+	<!-- (系统设置)根据条件获取商户提现列表接口 -->
+	<resultMap type="UserToCashRecord" id="doMsGetApplyToCashList">
+		<id column="UTCR_ID" property="utcrId" />
+		<result column="UTCR_STATUS" property="utcrStatus"/>
+		<result column="UTCR_MONEY" property="utcrMoney"/>
+		<result column="UTCR_ACCOUNT" property="utcrAccount"/>
+		<result column="UTCR_CREATE_TIME" property="utcrCreateTime"/>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetApplyToCashList" resultMap="doMsGetApplyToCashList">
+		SELECT
+			t1.UTCR_ID,
+			t2.S_NAME,
+			t3.U_TRUE_NAME,
+			t1.UTCR_STATUS,
+			t1.UTCR_MONEY,
+			t1.UTCR_ACCOUNT,
+			t1.UTCR_CREATE_TIME
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_user_to_cash_record
+				<where>
+					<if test="utcrStatus !=null and utcrStatus != ''">
+						UTCR_STATUS = #{utcrStatus}
+					</if>
+				</where>
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+		<where>
+			<if test="sName !=null and sName != ''">
+				t2.S_NAME LIKE '%${sName}%'
+			</if>		
+		</where>
+		ORDER BY
+			t1.UTCR_CREATE_TIME DESC
+			LIMIT #{start},
+			#{end}
+	</select>
+	<!-- (系统设置) 获取满足条件的商户提现记录总数 -->
+	<select id="msGetApplyToCashCount" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_user_to_cash_record
+				<where>
+					<if test="utcrStatus !=null and utcrStatus != ''">
+						UTCR_STATUS = #{utcrStatus}
+					</if>
+				</where>
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		<where>
+			<if test="sName !=null and sName != ''">
+				t2.S_NAME LIKE '%${sName}%'
+			</if>		
+		</where>
+	</select>
+	
+	<!-- (系统设置)修改商户提现状态接口 -->
+	<update id="doMsChangeApplyToCashStatus">
+		UPDATE t_user_to_cash_record
+		SET
+			UTCR_STATUS = #{utcrStatus}
+		WHERE
+			UTCR_ID = #{utcrId}
+	</update>
+	
+	<!-- 获取个人商户需求订单状态列表接口 -->
+	<select id="doMsGetPersonalIndexInfo" resultType="RequirementOrder">
+		SELECT
+			RO_STATUS AS roStatus
+		FROM
+			t_requirement_order
+		WHERE
+			S_ID = #{sId}
+	</select>
+	<!-- 获取个人商户需求订单昨日成交额接口 -->
+	<select id="msGetYestodyRequirementOrderMoney" resultType="RequirementOrder">
+		SELECT
+			RO_TOTAL_PRICE AS roTotalPrice
+		FROM
+			t_requirement_order
+		WHERE
+			S_ID = #{sId}
+		AND RO_STATUS IN (2, 6)
+		AND TO_DAYS(NOW()) - TO_DAYS(RO_OVER_TIME) = 1
+	</select>
+	<!-- 获取个人商户需求订单今日成交额接口 -->
+	<select id="msGetTodayRequirementOrderMoney" resultType="RequirementOrder">
+		SELECT
+			RO_TOTAL_PRICE AS roTotalPrice
+		FROM
+			t_requirement_order
+		WHERE
+			S_ID = #{sId}
+		AND RO_STATUS IN (2, 6)
+		AND TO_DAYS(NOW()) - TO_DAYS(RO_OVER_TIME) = 0
+	</select>
+	<!-- 获取个人商户需求订单总成交额接口 -->
+	<select id="msGetRequirementOrderTotalMoney" resultType="RequirementOrder">
+		SELECT
+			RO_TOTAL_PRICE AS roTotalPrice
+		FROM
+			t_requirement_order
+		WHERE
+			S_ID = #{sId}
+		AND RO_STATUS IN (2, 6)
+	</select>
+	<!-- 获取个人商户我的安排数量 -->
+	<select id="msGetStoreArrangeNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_store_arrange
+		WHERE
+			S_ID = #{sId}
+	</select>
+	<!-- 获取个人商户我的评级接口 -->
+	<select id="msGetStoreLevel" resultType="Store">
+		SELECT
+			S_LEVEL AS sLevel
+		FROM
+			t_store
+		WHERE
+			S_ID = #{sId}
+	</select>
+	<!-- 获取全部的需求类别列表 -->
+	<select id="msGetRequirementTypeList" resultType="RequirementType">
+		SELECT
+			RT_ID AS rtId,
+			RT_NAME AS rtName
+		FROM
+			t_requirement_type
+	</select>
+	<!-- 获取某商户特定需求类别的总成交额 -->
+	<select id="msGetTotalMoneyByRtIdAndSId" resultType="double">
+		SELECT
+			IFNULL(SUM(RO_TOTAL_PRICE),0)
+		FROM
+			t_requirement_order
+		WHERE
+			RT_ID = #{rtId}
+		AND S_ID = #{sId}
+		AND RO_STATUS IN (2, 6)
+	</select>
+	<!-- 获取某商户特定需求类别的总接单数量 -->
+	<select id="msGetTotalNumByRtIdAndSId" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_requirement_order
+		WHERE
+			RT_ID = #{rtId}
+		AND S_ID = #{sId}
+		AND RO_STATUS != 0
+	</select>
+	<!-- 获取某商户需求单价NO.1数据 -->
+	<resultMap type="RequirementOrder" id="msGetFirstRoInfoBySid">
+		<result column="RO_TOTAL_PRICE" property="roTotalPrice"/>
+		<association property="userRequirement" javaType="UserRequirement">
+			<result column="UR_TITLE" property="urTitle" />
+		</association>
+		<association property="requirementType" javaType="RequirementType">
+			<result column="RT_NAME" property="rtName" />
+		</association>
+	</resultMap>
+	<select id="msGetFirstRoInfoBySid" resultMap="msGetFirstRoInfoBySid">
+		SELECT
+			t1.RO_TOTAL_PRICE,
+			t2.UR_TITLE,
+			t3.RT_NAME
+		FROM
+			(
+				SELECT
+					RO_TOTAL_PRICE,
+					UR_ID,
+					RT_ID
+				FROM
+					t_requirement_order
+				WHERE
+					S_ID = #{sId}
+				AND RO_STATUS IN (2, 6)
+				ORDER BY
+					RO_TOTAL_PRICE DESC
+				LIMIT 0,
+				1
+			) t1
+		LEFT JOIN t_user_requirement t2 ON t1.UR_ID = t2.UR_ID
+		LEFT JOIN t_requirement_type t3 ON t1.RT_ID = t3.RT_ID
+	</select>
+	
+	<!-- 根据条件获取某商户的需求订单列表接口 -->
+	<resultMap type="RequirementOrder" id="doMsGetRequirementOrderListWithCondition">
+		<id column="RO_ID" property="roId" />
+		<result column="RO_CREATE_TIME" property="roCreateTime"/>
+		<result column="RO_STATUS" property="roStatus"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="RO_TOTAL_PRICE" property="roTotalPrice"/>
+		<result column="RO_ORDER_ID" property="roOrderId"/>
+		<result column="RO_CONFIRM_TIME" property="roConfirmTime"/>
+		<result column="RO_OVER_TIME" property="roOverTime"/>
+		<result column="RO_GET_TIME" property="roGetTime"/>
+		<result column="RO_VERIFICATION_TIME" property="roVerificationTime"/>
+		<association property="userRequirement" javaType="UserRequirement">
+			<result column="UR_TITLE" property="urTitle" />
+			<result column="UR_CONTENT" property="urContent" />
+			<result column="UR_OFFER_TYPE" property="urOfferType" />
+			<result column="UR_TRUE_NAME" property="urTrueName" />
+			<result column="UR_TEL" property="urTel" />
+			<result column="UR_ADDRESS" property="urAddress" />
+			<result column="UR_CREATE_TIME" property="urCreateTime" />
+			<result column="UR_GET_ADDRESS" property="urGetAddress" />
+		</association>
+		<association property="requirementType" javaType="RequirementType">
+			<result column="RT_NAME" property="rtName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetRequirementOrderListWithCondition" resultMap="doMsGetRequirementOrderListWithCondition">
+		SELECT
+			t1.RO_ID,
+			t1.RO_CREATE_TIME,
+			t1.RO_STATUS,
+			t1.P_TAG,
+			t1.RO_TOTAL_PRICE,
+			t1.RO_ORDER_ID,
+			t1.RO_CONFIRM_TIME,
+			t1.RO_OVER_TIME,
+			t1.RO_GET_TIME,
+			t1.RO_VERIFICATION_TIME,
+			t2.UR_TITLE,
+			t2.UR_CONTENT,
+			t2.UR_OFFER_TYPE,
+			t2.UR_TRUE_NAME,
+			t2.UR_TEL,
+			t2.UR_ADDRESS,
+			t2.UR_CREATE_TIME,
+			t2.UR_GET_ADDRESS,
+			t3.RT_NAME
+		FROM
+			(
+				SELECT
+					RO_ID,
+					UR_ID,
+					RT_ID,
+					RO_CREATE_TIME,
+					RO_STATUS,
+					P_TAG,
+					RO_TOTAL_PRICE,
+					RO_ORDER_ID,
+					RO_CONFIRM_TIME,
+					RO_OVER_TIME,
+					RO_GET_TIME,
+					RO_VERIFICATION_TIME
+				FROM
+					t_requirement_order
+				WHERE
+					S_ID = #{sId}
+				<if test="roStatus !=null and roStatus != ''">
+					AND RO_STATUS = #{roStatus}
+				</if>
+				<if test="rtId !=null and rtId != ''">
+					AND RT_ID = #{rtId}
+				</if>
+			) t1
+		LEFT JOIN t_user_requirement t2 ON t1.UR_ID = t2.UR_ID
+		LEFT JOIN t_requirement_type t3 ON t1.RT_ID = t3.RT_ID
+		<where>
+			<if test="urTitle !=null and urTitle != ''">
+				t2.UR_TITLE LIKE '%${urTitle}%'
+			</if>		
+		</where>
+		<where>
+			<if test="urTrueName !=null and urTrueName != ''">
+				t2.UR_TRUE_NAME LIKE '%${urTrueName}%'
+			</if>		
+		</where>
+		<where>
+			<if test="urTel !=null and urTel != ''">
+				t2.UR_TEL LIKE '%${urTel}%'
+			</if>		
+		</where>
+		ORDER BY
+			t1.RO_CREATE_TIME DESC
+		LIMIT #{start},
+ 		#{end}
+	</select>
+	<!-- 根据条件获取某商户的需求订单总数 -->
+	<select id="msGetRequirementOrderCountWithCondition" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			(
+				SELECT
+					RO_ID,
+					UR_ID
+				FROM
+					t_requirement_order
+				WHERE
+					S_ID = #{sId}
+				<if test="roStatus !=null and roStatus != ''">
+					AND RO_STATUS = #{roStatus}
+				</if>
+				<if test="rtId !=null and rtId != ''">
+					AND RT_ID = #{rtId}
+				</if>
+			) t1
+		LEFT JOIN t_user_requirement t2 ON t1.UR_ID = t2.UR_ID
+		<where>
+			<if test="urTitle !=null and urTitle != ''">
+				t2.UR_TITLE LIKE '%${urTitle}%'
+			</if>		
+		</where>
+		<where>
+			<if test="urTrueName !=null and urTrueName != ''">
+				t2.UR_TRUE_NAME LIKE '%${urTrueName}%'
+			</if>		
+		</where>
+		<where>
+			<if test="urTel !=null and urTel != ''">
+				t2.UR_TEL LIKE '%${urTel}%'
+			</if>		
+		</where>
+	</select>
+	
+	<!-- 获取某商户的店铺信息接口 -->
+	<resultMap type="Store" id="doMsGetStoreInfoBySid">
+		<id column="S_ID" property="sId" />
+		<result column="S_TYPE" property="sType"/>
+		<result column="S_NAME" property="sName"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="S_DESCRIBE" property="sDescribe"/>
+		<result column="S_LEADER" property="sLeader"/>
+		<result column="S_LEADER_IDCARD" property="sLeaderIdCard"/>
+		<result column="S_LEGAL" property="sLegal"/>
+		<result column="S_LEGAL_IDCARD" property="sLegalIdCard"/>
+		<result column="S_LEADER_PIC" property="sLeaderPic"/>
+		<result column="S_LEGAL_PIC" property="sLegalPic"/>
+		<result column="S_BUSINESS_LICENSE_PIC" property="sBuinessLicensePic"/>
+		<result column="S_TEL" property="sTel"/>
+		<result column="S_CREATE_TIME" property="sCreateTime"/>
+		<result column="S_ADDRESS" property="sAddress"/>
+		<result column="S_LON" property="sLon"/>
+		<result column="S_LAT" property="sLat"/>
+		<result column="S_WEIGHT" property="sWeight"/>
+		<result column="S_BOOTH_NUM" property="sBoothNum"/>
+		<result column="S_LEFT_BOOTH_NUM" property="sLeftBoothNum"/>
+		<result column="S_REQUIREMENT_SERVICE_CHARGE" property="sRequirementServiceCharge"/>
+		<result column="S_ORDER_LIMINT" property="sOrderLimint"/>
+		<result column="S_PRODUCT_SERVICE_CHARGE" property="sProductServiceCharge"/>
+		<result column="S_CHECKED" property="sChecked"/>
+		<result column="S_LEVEL" property="sLevel"/>
+		<result column="S_CHECKED_TIME" property="sCheckedTime"/>
+		<result column="S_CHECKED_OPINION" property="sCheckedOpinion"/>
+		<association property="areaCode" javaType="AreaCode">
+			<result column="AC_CITY" property="acCity" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetStoreInfoBySid" resultMap="doMsGetStoreInfoBySid">
+		SELECT
+			t1.S_ID,
+			t1.S_TYPE,
+			t1.S_NAME,
+			t1.P_TAG,
+			t1.S_DESCRIBE,
+			t2.AC_CITY,
+			t1.S_LEADER,
+			t1.S_LEADER_IDCARD,
+			t1.S_LEGAL,
+			t1.S_LEGAL_IDCARD,
+			t1.S_LEADER_PIC,
+			t1.S_LEGAL_PIC,
+			t1.S_BUSINESS_LICENSE_PIC,
+			t1.S_TEL,
+			t1.S_CREATE_TIME,
+			t1.S_ADDRESS,
+			t1.S_LON,
+			t1.S_LAT,
+			t1.S_WEIGHT,
+			t1.S_BOOTH_NUM,
+			t1.S_LEFT_BOOTH_NUM,
+			t1.S_REQUIREMENT_SERVICE_CHARGE,
+			t1.S_ORDER_LIMINT,
+			t1.S_PRODUCT_SERVICE_CHARGE,
+			t1.S_CHECKED,
+			t1.S_LEVEL,
+			t3.U_TRUE_NAME,
+			t1.S_CHECKED_TIME,
+			t1.S_CHECKED_OPINION
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_store
+				WHERE
+					S_ID = #{sId}
+			) t1
+		LEFT JOIN t_areacode t2 ON t1.AC_ID = t2.AC_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+	</select>
+	
+	<!-- 修改某商户的店铺信息接口 -->
+	<update id="doMsChangeStoreInfoBySid">
+		UPDATE t_store
+		SET S_DESCRIBE = #{sDescribe},
+ 		S_TEL = #{sTel},
+ 		S_ADDRESS = #{sAddress},
+		S_LON = #{sLon},
+		S_LAT = #{sLat}
+		WHERE
+			S_ID = #{sId}
+	</update>
+	
+	<!-- 根据pTag删除图片 -->
+	<delete id="msDelPicsByPtag">
+		DELETE
+		FROM
+			t_pic
+		WHERE
+			P_TAG = #{pTag}
+	</delete>
+	
+	<!-- （账号管理）是否设置过密保问题接口 -->
+	<select id="doMsGetStatusOfSafetyQuestions" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user
+		WHERE
+			U_ID = #{uId}
+		AND U_FIRST_SQ_ID != ''
+	</select>
+	
+	<!-- （账号管理）获取所有安全问题接口 -->
+	<select id="doMsGetSafetyQuestionsList" resultType="SafetyQuestion">
+		SELECT
+			SQ_ID AS sqId,
+			SQ_NAME AS sqName,
+			SQ_POSITION AS sqPosition
+		FROM
+			t_safety_question
+		ORDER BY
+			SQ_POSITION ASC
+	</select>
+	
+	<!-- （账号管理）设置安全问题接口 -->
+	<update id="doMsSetSafetyQuestionForUser">
+		UPDATE t_user
+		SET U_FIRST_SQ_ID = #{firstSqId},
+ 		U_FIRST_SQ_ANSWER = #{firstSqAnswer},
+		U_SECOND_SQ_ID = #{secondSqId},
+ 		U_SECOND_SQ_ANSWER = #{secondSqAnswer},
+ 		U_THIRD_SQ_ID = #{thirdSqId},
+		U_THIRD_SQ_ANSWER = #{thirdSqAnswer}
+		WHERE
+			U_ID = #{uId}
+	</update>
+	
+	<!-- （账号管理）获取某用户已设置的安全问题接口 -->
+	<select id="msGetSafetyQuestionIdOfUser" resultType="User">
+		SELECT
+			U_FIRST_SQ_ID AS uFirstSqId,
+			U_SECOND_SQ_ID AS uSecondSqId,
+			U_THIRD_SQ_ID AS uThirdSqId
+		FROM
+			t_user
+		WHERE
+			U_ID = #{uId}
+	</select>
+	
+	<!-- 根据安全问题标识获取安全问题相关信息接口 -->
+	<select id="msGetSafetyQuestionInfoBySqId" resultType="SafetyQuestion">
+		SELECT
+			SQ_ID AS sqId,
+			SQ_NAME AS sqName,
+			SQ_POSITION AS sqPosition
+		FROM
+			t_safety_question
+		WHERE
+			SQ_ID = #{sqId}
+	</select>
+	
+	<!-- （账号管理）获取某用户已设置的安全问题答案接口 -->
+	<select id="msGetSafetyQuestionAnswerOfUser" resultType="User">
+		SELECT
+			U_FIRST_SQ_ANSWER AS uFirstSqAnswer,
+			U_SECOND_SQ_ANSWER AS uSecondSqAnswer,
+			U_THIRD_SQ_ANSWER AS uThirdSqAnswer
+		FROM
+			t_user
+		WHERE
+			U_ID = #{uId}
+	</select>
+	
+	<!-- （账号管理）找回密码接口 -->
+	<select id="doMsRetrievePassword" resultType="User">
+		SELECT
+			U_PASSWORD AS uPassword
+		FROM
+			t_user
+		WHERE
+			U_ID = #{uId}
+	</select>
+	
+	<!-- （账号管理）修改用户密码 -->
+	<update id="doMsChangePassword">
+		UPDATE t_user
+		SET U_PASSWORD = #{newPassword}
+		WHERE
+			U_ID = #{uId}
+	</update>
+	
+	<!-- （账号管理）获取某商户的钱包相关数据接口 -->
+	<select id="doMsGetMyWallet" resultType="UserWallet">
+		SELECT
+			UW_LEFT_MONEY AS uwLeftMoney,
+			UW_DEPOSIT AS uwDeposit,
+			UW_APPLY_TO_CASH AS uwApplyToCash,
+			UW_ALREADY_TO_CASH AS uwAlreadyToCash
+		FROM
+			t_user_wallet
+		WHERE
+			S_ID = #{sId}
+	</select>
+	<!-- （账号管理）获取某商户申请解冻的保障金总金额 -->
+	<select id="msGetApplyToFreeDepositMoney" resultType="double">
+		SELECT
+			IFNULL(SUM(UDR_MONEY), 0)
+		FROM
+			t_user_deposit_record
+		WHERE
+			S_ID = #{sId}
+		AND UDR_STATUS = 1
+	</select>
+	
+	<!-- （账号管理）获取全部支付方式接口 -->
+	<resultMap type="PayStyle" id="doMsGetPayStyleList">
+		<id column="PS_ID" property="psId" />
+		<result column="PS_NAME" property="psName"/>
+		<association property="pic" javaType="Pic">
+			<result column="P_NAME" property="pName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetPayStyleList" resultMap="doMsGetPayStyleList">
+		SELECT
+			t1.PS_ID,
+			t1.PS_NAME,
+			t2.P_NAME
+		FROM
+			(
+				SELECT
+					PS_ID,
+					PS_NAME,
+					P_TAG
+				FROM
+					t_pay_style
+			) t1
+		LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG
+	</select>
+	
+	<!-- （账号管理）商户申请提现接口 -->
+	<insert id="doMsApplyToCash">
+		INSERT INTO t_user_to_cash_record
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{uId}, 
+				0,
+				#{utcrMoney},
+				#{psId},
+				#{utcrAccount},
+				NOW()
+			)
+	</insert>
+	<!-- （账号管理）修改商户钱包可用余额接口 -->
+	<update id="msChangeUserWalletOfLeftMoney">
+		UPDATE t_user_wallet
+		SET UW_LEFT_MONEY = #{uwLeftMoney},
+ 		UW_APPLY_TO_CASH = #{uwApplyToCash}
+		WHERE S_ID = #{sId}
+	</update>
+	
+	<!-- （账号管理）商户缴纳保障金接口 -->
+	<insert id="doMsAddDepositRecord">
+		INSERT INTO t_user_deposit_record
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{uId}, 
+				0,
+				#{udrMoney},
+				#{psId},
+				NOW(),
+				#{udrOrderId}
+			)
+	</insert>
+	<!-- （账号管理）修改商户钱包冻结（已缴纳）的保障金金额接口 -->
+	<update id="msChangeUserWalletOfDeposit">
+		UPDATE t_user_wallet
+		SET UW_DEPOSIT = #{uwDeposit}
+		WHERE S_ID = #{sId}
+	</update>
+	
+	<!-- （账号管理）修改商户钱包冻结（已缴纳）的保障金金额及可用余额接口 -->
+	<update id="msChangeUserWalletByDeposit">
+		UPDATE t_user_wallet
+		SET UW_LEFT_MONEY = #{uwLeftMoney},
+		UW_DEPOSIT = #{uwDeposit}
+		WHERE S_ID = #{sId}
+	</update>
+	
+	<!-- （账号管理）商户申请解冻保障金接口 -->
+	<insert id="doMsApplyToFreeForDepositRecord">
+		INSERT INTO t_user_deposit_record
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{uId}, 
+				1,
+				#{udrMoney},
+				'',
+				NOW(),
+				''
+			)
+	</insert>
+	
+	<!-- （账号管理）获取商户提现记录列表接口 -->
+	<resultMap type="UserToCashRecord" id="doMsGetApplyToCashListBySId">
+		<id column="UTCR_ID" property="utcrId" />
+		<result column="UTCR_STATUS" property="utcrStatus"/>
+		<result column="UTCR_MONEY" property="utcrMoney"/>
+		<result column="UTCR_ACCOUNT" property="utcrAccount"/>
+		<result column="UTCR_CREATE_TIME" property="utcrCreateTime"/>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+		<association property="payStyle" javaType="PayStyle">
+			<result column="PS_NAME" property="psName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetApplyToCashListBySId" resultMap="doMsGetApplyToCashListBySId">
+		SELECT
+			t1.UTCR_ID,
+			t2.S_NAME,
+			t3.U_TRUE_NAME,
+			t1.UTCR_STATUS,
+			t1.UTCR_MONEY,
+			t4.PS_NAME,
+			t1.UTCR_ACCOUNT,
+			t1.UTCR_CREATE_TIME
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_user_to_cash_record
+				WHERE
+					S_ID = #{sId}
+				<if test="utcrStatus !=null and utcrStatus != ''">
+					AND UTCR_STATUS = #{utcrStatus}
+				</if>
+				<if test="psId !=null and psId != ''">
+					AND PS_ID = #{psId}
+				</if>
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+		LEFT JOIN t_pay_style t4 ON t1.PS_ID = t4.PS_ID
+		ORDER BY
+			t1.UTCR_CREATE_TIME DESC
+		LIMIT #{start},
+				#{end}
+	</select>
+	<!-- （账号管理）获取满足条件的商户提现记录总数 -->
+	<select id="msGetApplyToCashListCount" resultType="int">
+		SELECT
+		COUNT(0)
+		FROM
+			t_user_to_cash_record
+		WHERE
+			S_ID = #{sId}
+		<if test="utcrStatus !=null and utcrStatus != ''">
+			AND UTCR_STATUS = #{utcrStatus}
+		</if>
+		<if test="psId !=null and psId != ''">
+			AND PS_ID = #{psId}
+		</if>							
+	</select>
+	
+	<!-- （账号管理）获取商户我的安排列表接口 -->
+	<resultMap type="StoreArrange" id="doMsGetMyArrangeListBySId">
+		<id column="SA_ID" property="saId" />
+		<result column="SA_CONTENT" property="saContent"/>
+		<result column="SA_CREATE_TIME" property="saCreateTime"/>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetMyArrangeListBySId" resultMap="doMsGetMyArrangeListBySId">
+		SELECT
+			t1.SA_ID,
+			t1.SA_CONTENT,
+			t1.SA_CREATE_TIME,
+			t2.S_NAME,
+			t3.U_TRUE_NAME
+		FROM
+			(
+				SELECT
+					SA_ID,
+					SA_CONTENT,
+					U_ID,
+					SA_CREATE_TIME,
+					S_ID
+				FROM
+					t_store_arrange
+				WHERE
+					S_ID = #{sId}
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+	</select>
+	
+	<!-- （账号管理）商户添加我的安排接口 -->
+	<insert id="doMsAddMyArrange">
+		INSERT INTO t_store_arrange
+		VALUES
+			(
+				UUID(),
+				#{saContent},
+				#{uId},
+				NOW(),
+				#{sId}
+			)
+	</insert>
+	<!-- 修改商户我的安排接口 -->
+	<update id="doMSUpdateMyArrange">
+		UPDATE t_store_arrange
+		SET SA_CONTENT = #{saContent}
+		WHERE
+			SA_ID = #{saId}
+	</update>
+	<!-- 获取企业商户今日商品订单总数接口 -->
+	<select id="msGetTodayProductOrderNumBySId" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId}
+		AND TO_DAYS(NOW()) - TO_DAYS(PO_CREATE_TIME) = 0
+	</select>
+	<!-- 获取企业商户商品订单状态列表接口 -->
+	<select id="msGetProductOrderStatusListBySId" resultType="ProductOrder">
+		SELECT
+			PO_STATUS AS poStatus
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId}
+	</select>
+	<!-- 获取企业商户昨日商品订单成交额 -->
+	<select id="msGetYestodayProductOrderTotalMoney" resultType="double">
+		SELECT
+			IFNULL(SUM(PO_TOTAL_PRICE),0)
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId}
+		AND TO_DAYS(NOW()) - TO_DAYS(PO_CREATE_TIME) = 1
+		AND PO_STATUS IN (3, 4)
+	</select>
+	<!-- 获取企业商户今日商品订单成交额 -->
+	<select id="msGetTodayProductOrderTotalMoney" resultType="double">
+		SELECT
+			IFNULL(SUM(PO_TOTAL_PRICE),0)
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId}
+		AND TO_DAYS(NOW()) - TO_DAYS(PO_CREATE_TIME) = 0
+		AND PO_STATUS IN (3, 4)
+	</select>
+	<!-- 获取企业商户商品订单总成交额 -->
+	<select id="msGetProductOrderTotalMoney" resultType="double">
+		SELECT
+			IFNULL(SUM(PO_TOTAL_PRICE),0)
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId}
+		AND PO_STATUS IN (3, 4)
+	</select>
+	
+	<!-- 根据条件获取商品列表接口 -->
+	<resultMap type="Product" id="doMsGetProductListBySId">
+		<id column="P_ID" property="pId" />
+		<result column="P_NAME" property="pName"/>
+		<result column="P_BRAND" property="pBrand"/>
+		<result column="P_DESCRIBE" property="pDescribe"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_CREATE_TIME" property="pCreateTime"/>
+		<result column="PTD_ID" property="ptdId"/>
+		<result column="P_DEL" property="pDel"/>
+		<result column="P_CHECKED" property="pChecked"/>
+		<result column="P_HTML" property="pHtml"/>
+		<result column="P_BROWSE_NUM" property="pBrowseNum"/>
+		<result column="P_HAVE_BOOTH" property="pHaveBooth"/>
+		<result column="P_TOTAL_NUM" property="pTotalNum"/>
+		<result column="P_STOCK_NUM" property="pStockNum"/>
+		<result column="P_CHECKED_TIME" property="pCheckedTime"/>
+		<result column="P_CHECKED_OPINION" property="pCheckedOpinion"/>
+		<association property="store" javaType="Store">
+			<result column="S_NAME" property="sName" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_TRUE_NAME" property="uTrueName" />
+		</association>
+		<association property="productTypeDetail" javaType="ProductTypeDetail">
+			<result column="PTD_NAME" property="ptdName" />
+		</association>
+	</resultMap>
+	<select id="doMsGetProductListBySId" resultMap="doMsGetProductListBySId">
+		SELECT
+			t1.P_ID,
+			t2.S_NAME,
+			t1.P_NAME,
+			t1.P_BRAND,
+			t1.P_DESCRIBE,
+			t1.P_TAG,
+			t1.P_ORIGINAL_PRICE,
+			t1.P_NOW_PRICE,
+			t1.P_CREATE_TIME,
+			t4.PTD_NAME,
+			t1.P_DEL,
+			t1.P_CHECKED,
+			t1.P_HTML,
+			t1.P_BROWSE_NUM,
+			t1.P_HAVE_BOOTH,
+			t1.P_TOTAL_NUM,
+			t1.P_STOCK_NUM,
+			t3.U_TRUE_NAME,
+			t1.P_CHECKED_TIME,
+			t1.P_CHECKED_OPINION,
+			t1.PTD_ID
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_product
+				WHERE
+					S_ID = #{sId}
+				<if test="pName !=null and pName != ''">
+					AND P_NAME LIKE '%${pName}%'
+				</if>
+				<if test="ptId !=null and ptId != ''">
+					AND PTD_ID LIKE '${ptId}%'
+				</if>
+			) t1
+		LEFT JOIN t_store t2 ON t1.S_ID = t2.S_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+		LEFT JOIN t_product_type_detail t4 ON t1.PTD_ID = t4.PTD_ID
+		ORDER BY
+			t1.P_WEIGHT DESC
+		LIMIT #{start},
+ 		#{end}
+	</select>
+	<!-- 根据条件获取满足条件的商品的总数接口 -->
+	<select id="msGetSatisfactionConditionProductCount" resultType="int">
+				SELECT
+					COUNT(0)
+				FROM
+					t_product
+				WHERE
+					S_ID = #{sId}
+				<if test="pName !=null and pName != ''">
+					AND P_NAME LIKE '%${pName}%'
+				</if>
+				<if test="ptId !=null and ptId != ''">
+					AND PTD_ID LIKE '${ptId}%'
+				</if>
+	</select>
+	
+	<!-- 获取某商户商品推荐橱窗接口 -->
+	<select id="msGetBoothBySId" resultType="Store">
+		SELECT
+			S_BOOTH_NUM AS sBoothNum,
+			S_LEFT_BOOTH_NUM AS sLeftBoothNum
+		FROM
+			t_store
+		WHERE
+			S_ID = #{sId}
+	</select>
+	
+	<!-- 获取某商品没有选择的商品属性列表 -->
+	<select id="msGetProductPropertyListWhichNotSelect" resultType="ProductProperty">
+		SELECT
+			PP_ID AS ppId,
+			PP_NAME AS ppName,
+			PP_VALUE AS ppValue,
+			PP_TAG AS ppTag,
+			PP_CHOSE_TYPE AS ppChoseType,
+			PP_REQUIRED AS ppRequired
+		FROM
+			t_product_property
+		WHERE
+			PP_TAG = #{ppTag}
+		AND PP_ID NOT IN (
+			SELECT
+				PP_ID
+			FROM
+				t_product_relation_property
+			WHERE
+				P_ID = #{pId}
+		)
+	</select>
+	<!-- 获取某商品已经选择的商品属性列表 -->
+	<select id="msGetProductPropertyListWhichSelect" resultType="ProductProperty">
+		SELECT
+			PP_ID AS ppId,
+			PP_NAME AS ppName,
+			PP_VALUE AS ppValue,
+			PP_TAG AS ppTag,
+			PP_CHOSE_TYPE AS ppChoseType,
+			PP_REQUIRED AS ppRequired
+		FROM
+			t_product_property
+		WHERE
+			PP_TAG = #{ppTag}
+		AND PP_ID IN (
+			SELECT
+				PP_ID
+			FROM
+				t_product_relation_property
+			WHERE
+				P_ID = #{pId}
+		)
+	</select>
+	
+	<!-- 获取某商品的总数、库存数量 -->
+	<select id="msGetProductStockNum" resultType="Product">
+		SELECT
+			P_TOTAL_NUM AS pTotalNum,
+			P_STOCK_NUM AS pStockNum,
+			P_HAVE_BOOTH AS pHaveBooth
+		FROM
+			t_product
+		WHERE
+			P_ID = #{pId}
+	</select>
+	
+	<!-- 修改商品基本信息 -->
+	<update id="msChangeProductBaseInfo">
+		UPDATE t_product
+		SET P_NAME = #{pName},
+ 		P_BRAND = #{pBrand},
+ 		P_DESCRIBE = #{pDescribe},
+ 		P_ORIGINAL_PRICE = #{pOriginalPrice},
+ 		P_NOW_PRICE = #{pNowPrice},
+ 		P_WEIGHT = #{pWeight},
+ 		P_HTML = #{pHtml},
+ 		P_HAVE_BOOTH = #{pHaveBooth},
+ 		P_TOTAL_NUM = #{pTotalNum},
+ 		P_STOCK_NUM = #{pStockNum}
+		WHERE
+			P_ID = #{pId}
+	</update>
+	<!-- 删除某商品关联的所有属性 -->
+	<delete id="msDelProductPropertiesByPId">
+		DELETE
+		FROM
+			t_product_relation_property
+		WHERE
+			P_ID =#{pId}
+	</delete>
+	<!-- 添加某商品关联的商品属性 -->
+	<insert id="msAddProductPropertiesByPId">
+		INSERT INTO t_product_relation_property
+		VALUES
+			(UUID(), #{pId}, #{ppId})
+	</insert>
+	
+	<!-- 插入商品基本信息 -->
+	<insert id="msAddProductBaseInfo">
+		INSERT INTO t_product
+		VALUES
+			(
+				#{pId},
+				#{sId},
+				#{pName},
+				#{pBrand},
+				#{pDescribe},
+				#{pTag},
+				#{pOriginalPrice},
+				#{pNowPrice},
+				NOW(),
+				#{ptdId},
+				0,
+				0,
+				#{pWeight},
+				#{pHtml},
+				0,
+				#{pHaveBooth},
+				#{pStockNum},
+				#{pStockNum},
+				'',
+				'',
+				''
+			)
+	</insert>
+	
+	<!-- 删除某商品信息（软删除） -->
+	<update id="doMsDelProductInfoByPId">
+		UPDATE t_product
+		SET P_DEL = 1
+		WHERE
+			P_ID = #{pId}
+	</update>
+	
+	<!-- 获取某商户的商品订单列表接口 -->
+	<resultMap type="ProductOrder" id="doMsGetProductOrderListBySId">
+		<id column="PO_ID" property="poId" />
+		<result column="PO_CREATE_TIME" property="poCreateTime"/>
+		<result column="PO_TOTAL_PRICE" property="poTotalPrice"/>
+		<result column="PO_STATUS" property="poStatus"/>
+		<result column="PO_PAY_TIME" property="poPayTime"/>
+		<result column="PO_SEND_TIME" property="poSendTime"/>
+		<result column="PO_DELIVER_TIME" property="poDeliverTime"/>
+		<result column="PO_OVER_TIME" property="poOverTime"/>
+		<result column="PO_PAY_CODE" property="poPayCode"/>
+		<result column="PO_ORDER_ID" property="poOrderId"/>
+		<result column="PO_DELIVER_NAME" property="poDeliverName"/>
+		<result column="PO_DELIVER_TEL" property="poDeliverTel"/>
+		<result column="PO_DELIVER_ADDRESS" property="poDeliverAddress"/>
+		<result column="PO_DELIVER_COMPANY" property="poDeliverCompany"/>
+		<result column="PO_DELIVER_CODE" property="poDeliverCode"/>
+		<association property="payStyle" javaType="PayStyle">
+			<result column="PS_NAME" property="psName" />
+		</association>
+		<association property="user" javaType="User">
+			<result column="U_ACCOUNT" property="uAccount" />
+		</association>
+	</resultMap>
+	<select id="doMsGetProductOrderListBySId" resultMap="doMsGetProductOrderListBySId">
+		SELECT
+			t1.PO_ID,
+			t2.PS_NAME,
+			t3.U_ACCOUNT,
+			t1.PO_CREATE_TIME,
+			t1.PO_TOTAL_PRICE,
+			t1.PO_STATUS,
+			t1.PO_PAY_TIME,
+			t1.PO_SEND_TIME,
+			t1.PO_DELIVER_TIME,
+			t1.PO_OVER_TIME,
+			t1.PO_PAY_CODE,
+			t1.PO_ORDER_ID,
+			t1.PO_DELIVER_NAME,
+			t1.PO_DELIVER_TEL,
+			t1.PO_DELIVER_ADDRESS,
+			t1.PO_DELIVER_COMPANY,
+			t1.PO_DELIVER_CODE
+		FROM
+			(
+				SELECT
+					*
+				FROM
+					t_product_order
+				WHERE
+					S_ID = #{sId}
+				<if test="poOrderId !=null and poOrderId != ''">
+					AND PO_ORDER_ID LIKE '%${poOrderId}%'
+				</if>
+				<if test="poStatus !=null and poStatus != ''">
+					AND PO_STATUS = #{poStatus}
+				</if>
+				<if test="poDeliverName !=null and poDeliverName != ''">
+					AND PO_DELIVER_NAME LIKE '%${poDeliverName}%'
+				</if>
+				<if test="poDeliverTel !=null and poDeliverTel != ''">
+					AND PO_DELIVER_TEL LIKE '%${poDeliverTel}%'
+				</if>
+			) t1
+		LEFT JOIN t_pay_style t2 ON t1.PS_ID = t2.PS_ID
+		LEFT JOIN t_user t3 ON t1.U_ID = t3.U_ID
+		ORDER BY
+			t1.PO_CREATE_TIME DESC
+		LIMIT #{start}, #{end}
+	</select>
+	<!-- 获取某商户满足条件的的商品订单总数 -->
+	<select id="msGetSatifitionConditionProductOrderCountBySId" resultType="int">
+				SELECT
+					COUNT(0)
+				FROM
+					t_product_order
+				WHERE
+					S_ID = #{sId}
+				<if test="poOrderId !=null and poOrderId != ''">
+					AND PO_ORDER_ID LIKE '%${poOrderId}%'
+				</if>
+				<if test="poStatus !=null and poStatus != ''">
+					AND PO_STATUS = #{poStatus}
+				</if>
+				<if test="poDeliverName !=null and poDeliverName != ''">
+					AND PO_DELIVER_NAME LIKE '%${poDeliverName}%'
+				</if>
+				<if test="poDeliverTel !=null and poDeliverTel != ''">
+					AND PO_DELIVER_TEL LIKE '%${poDeliverTel}%'
+				</if>
+	</select>
+	<!-- 根据poId获取订单详情接口 -->
+	<resultMap type="ProductOrderDetail" id="msGetProductOrderDetailByPoId">
+		<id column="POD_ID" property="podId" />
+		<result column="POD_NUM" property="podNum"/>
+		<result column="POD_PROPERTY" property="podProperty"/>
+		<result column="POD_PRICE" property="podPrice"/>
+		<association property="product" javaType="Product">
+			<result column="P_NAME" property="pName" />
+		</association>
+	</resultMap>
+	<select id="msGetProductOrderDetailByPoId" resultMap="msGetProductOrderDetailByPoId">
+		SELECT
+			t1.POD_ID,
+			t2.P_NAME,
+			t1.POD_NUM,
+			t1.POD_PROPERTY,
+			t1.POD_PRICE
+		FROM
+			(
+				SELECT
+					POD_ID,
+					P_ID,
+					POD_NUM,
+					POD_PROPERTY,
+					POD_PRICE
+				FROM
+					t_product_order_detail
+				WHERE
+					PO_ID = #{poId}
+			) t1
+		LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+	</select>
+	
+	<!-- 修改商品订单状态接口 -->
+	<update id="doMsChangeProductOrderStatus">
+	   UPDATE t_product_order  
+	   SET PO_STATUS= #{poStatus}, 
+	   PO_DELIVER_COMPANY = #{poDeliverCompany}, 
+	   PO_DELIVER_CODE = #{poDeliverCode},
+       PO_SEND_TIME = NOW()
+	   WHERE PO_ID = #{poId} 
+	</update>
+	
+	<!-- 修改某商户已经提交的店铺审核资料接口 -->
+	<update id="doMsChangeStoreAuditInfoBySid">
+		UPDATE t_store
+		SET S_DESCRIBE = #{sDescribe},
+ 		S_TEL = #{sTel},
+ 		S_ADDRESS = #{sAddress},
+		S_LON = #{sLon},
+		S_LAT = #{sLat},
+		S_LEADER = #{sLeader},
+		S_LEADER_IDCARD = #{sLeaderIdCard},
+		S_LEGAL = #{sLegal},
+		S_LEGAL_IDCARD = #{sLegalIdCard},
+		S_LEADER_PIC = #{sLeaderPic},
+		S_LEGAL_PIC = #{sLegalPic},
+		S_BUSINESS_LICENSE_PIC = #{sBuinessLicensePic}
+		WHERE
+			S_ID = #{sId}
+	</update>
+	
+	<!-- 获取某商户相关证件照审核资料 -->
+	<select id="msGetStoreAuditPicsInfoBySid" resultType="Store">
+		SELECT
+			S_LEADER_PIC AS sLeaderPic,
+			S_LEGAL_PIC AS sLegalPic,
+			S_BUSINESS_LICENSE_PIC AS sBuinessLicensePic
+		FROM
+			t_store
+		WHERE
+			S_ID = #{sId}
+	</select>
+	
+	<!-- 通过pId获取商户名称 -->
+	<select id="msGetSnameBypId" resultType="Store">
+		SELECT
+			S_NAME AS sName
+		FROM
+			t_store
+		WHERE
+			S_ID = (
+				SELECT
+					S_ID
+				FROM
+					t_product
+				WHERE
+					P_ID = #{pId}
+			)
+	</select>
+	
+	<!-- 获取某条申请提现的信息接口 -->
+	<select id="msGetApplyToCashInfoByUtcrId" resultType="UserToCashRecord">
+		SELECT
+			S_ID AS sId,
+			UTCR_STATUS AS utcrStatus,
+			UTCR_MONEY AS utcrMoney
+		FROM
+			t_user_to_cash_record
+		WHERE
+			UTCR_ID = #{utcrId}
+	</select>
+	
+	<!-- 修改商户钱包申请提现、已提现金额接口 -->
+	<update id="msUpdateCashOfUserWallet">
+		UPDATE t_user_wallet
+		SET UW_APPLY_TO_CASH = UW_APPLY_TO_CASH - #{uwApplyToCash},
+ 		UW_ALREADY_TO_CASH = UW_ALREADY_TO_CASH + #{uwAlreadyToCash}
+		WHERE S_ID = #{sId}
+	</update>	
+	<!-- 修改某店铺剩余展位的数量 -->
+	<update id="msUpdateStoreLeftBoothNum">
+		UPDATE t_store
+		<if test="status == 0">
+			SET S_LEFT_BOOTH_NUM = S_LEFT_BOOTH_NUM - 1			
+		</if>
+		<if test="status == 1">
+			SET S_LEFT_BOOTH_NUM = S_LEFT_BOOTH_NUM + 1		
+		</if>
+		WHERE S_ID = #{sId}
+	</update>
+	
+	<!-- 商户是否为推荐商户 -->
+	<select id="msGetStoreIsRecommendInfo" resultType="RecommendStore">
+		SELECT
+			RS_TITLE AS rsTitle,
+			RS_CONTENT AS rsContent,
+			P_TAG AS pTag
+		FROM
+			t_recommend_store
+		WHERE
+			S_ID = #{sId}
+	</select>
+	
+	<!-- 删除推荐店铺 -->
+	<delete id="msDelRecommendStoreBySid">
+		DELETE
+		FROM
+			t_recommend_store
+		WHERE
+			S_ID = #{sId}
+	</delete>
+	
+	<!-- 新增推荐商户 -->
+	<insert id="msAddRecommendStore">
+		INSERT INTO t_recommend_store
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{rsTitle},
+				#{rsContent},
+				#{pTag},
+				#{uId},
+				NOW()
+			)
+	</insert>
+	
+</mapper>

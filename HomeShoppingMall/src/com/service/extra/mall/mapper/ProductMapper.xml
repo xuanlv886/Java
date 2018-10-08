@@ -1,0 +1,1758 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.service.extra.mall.mapper.ProductMapper">
+	
+	<!-- 根据商品id查询商品信息 -->
+	<select id="doGetProductByPId" resultType="Product">
+	SELECT
+		P_ID AS pId,
+		S_ID AS sId,
+		P_NAME AS pName,
+		P_BRAND AS pBrand,
+		P_DESCRIBE AS pDescribe,
+		P_TAG AS pTag,
+		P_ORIGINAL_PRICE AS pOriginalPrice,
+		P_NOW_PRICE AS pNowPrice,
+		P_CREATE_TIME AS pCreateTime,
+		PTD_ID AS ptdId,
+		P_DEL AS pDel,
+		P_CHECKED AS pChecked,
+		P_WEIGHT AS pWeight,
+		P_HTML AS pHtml,
+		P_BROWSE_NUM AS pBrowseNum,
+		P_HAVE_BOOTH AS pHaveBooth,
+		P_TOTAL_NUM AS pTotalNum,
+		P_STOCK_NUM AS pStockNum,
+		U_ID AS uId,
+		P_CHECKED_TIME AS pCheckedTime,
+		P_CHECKED_OPINION AS pCheckedOpinion
+	FROM
+		t_product
+	WHERE P_ID = #{pId}
+	</select>
+	
+	<!-- 获取商品大类信息 -->
+	<select id="doGetProductType" resultType="ProductType">
+	SELECT
+		PT_ID AS ptId,
+		PT_NAME AS ptName
+	FROM
+		t_product_type
+	</select>
+	
+	<!-- 获取店铺最新商品信息 -->
+	<select id="doGetStoreNewProduct" resultMap="doGetStoreNewProduct">
+	SELECT
+		t1.P_ID,
+		t1.S_ID,
+		t1.P_NAME,
+		t1.P_BRAND,
+		t1.P_DESCRIBE,
+		t1.P_TAG,
+		t1.P_ORIGINAL_PRICE,
+		t1.P_NOW_PRICE,
+		t1.P_CREATE_TIME,
+		t1.PTD_ID,
+		t1.P_DEL,
+		t1.P_CHECKED,
+		t1.P_WEIGHT,
+		t1.P_HTML,
+		t1.P_BROWSE_NUM,
+		t1.P_HAVE_BOOTH,
+		t1.P_TOTAL_NUM,
+		t1.P_STOCK_NUM,
+		t1.U_ID,
+		t1.P_CHECKED_TIME,
+		t1.P_CHECKED_OPINION,
+		t2.P_ID AS picId,
+		t2.P_NAME AS picName
+	FROM
+		t_product t1
+	LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG
+	WHERE
+		t2.P_NO = 0
+	AND S_ID = #{sId}
+	AND P_DEL = 0
+	order by P_CREATE_TIME desc limit 2
+	</select>
+	<resultMap type="Product" id="doGetStoreNewProduct">
+		<id column="P_ID" property="pId" />
+		<result column="S_ID" property="sId"/>
+		<result column="P_NAME" property="pName"/>
+		<result column="P_BRAND" property="pBrand"/>
+		<result column="P_DESCRIBE" property="pDescribe"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_CREATE_TIME" property="pCreateTime"/>
+		<result column="PTD_ID" property="ptdId"/>
+		<result column="P_DEL" property="pDel"/>
+		<result column="P_CHECKED" property="pChecked"/>
+		<result column="P_WEIGHT" property="pWeight"/>
+		<result column="P_HTML" property="pHtml"/>
+		<result column="P_BROWSE_NUM" property="pBrowseNum"/>
+		<result column="P_HAVE_BOOTH" property="pHaveBooth"/>
+		<result column="P_TOTAL_NUM" property="pTotalNum"/>
+		<result column="P_STOCK_NUM" property="pStockNum"/>
+		<result column="U_ID" property="uId"/>
+		<result column="P_CHECKED_TIME" property="pCheckedTime"/>
+		<result column="P_CHECKED_OPINION" property="pCheckedOpinion"/>
+		<association property="pic" javaType="Pic">
+			<id column="picId" property="pId" />
+			<result column="picName" property="pName" />
+		</association>
+	</resultMap>
+	
+	<!-- 获取用户该商店的历史访问记录 -->
+	<select id="doGetStoreHistoryProduct" resultMap="doGetStoreHistoryProduct">
+	SELECT
+		t1.UF_ID,
+		t1.P_ID,
+		t1.U_ID,
+		t1.UF_CREATE_TIME,
+		t2.P_NAME,
+		t2.P_DESCRIBE,
+		t2.P_NOW_PRICE,
+		t2.P_ORIGINAL_PRICE,
+		t2.P_TAG,
+		t2.S_ID,
+		t3.P_ID AS picId,
+		t3.P_NAME AS picName
+	FROM
+		t_user_footprint t1
+	LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+	LEFT JOIN t_pic t3 ON t2.P_TAG = t3.P_TAG
+	WHERE
+		t1.U_ID = #{uId} AND t2.S_ID = #{sId} AND t3.P_NO = 0 order by t1.UF_CREATE_TIME DESC LIMIT 2
+	</select>
+	<resultMap type="Product" id="doGetStoreHistoryProduct">
+		<id column="P_ID" property="pId" />
+		<result column="P_NAME" property="pName"/>
+		<result column="P_DESCRIBE" property="pDescribe"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="S_ID" property="sId"/>
+		<association property="pic" javaType="Pic">
+			<id column="picId" property="pId" />
+			<result column="picName" property="pName" />
+		</association>
+	</resultMap>
+	
+	<!-- 修改用户需求-->
+	<update id="doUpdateUserRequirement">
+		UPDATE t_user_requirement
+			SET RT_ID = #{rtId},
+			 UR_TITLE = #{urTitle},
+			 UR_CONTENT = #{urContent},
+			 UR_OFFER_TYPE = #{urOfferType},
+			 UR_OFFER_PRICE = #{urOfferPrice},
+			 UR_TRUE_NAME = #{urTrueName},
+			 UR_TEL = #{urTel},
+			 UR_ADDRESS = #{urAddress}
+			WHERE
+				U_ID = #{uId} AND UR_ID = #{urId}
+	</update>
+	
+	<!-- 添加用户需求 -->
+	<insert id="doAddUserRequirement">
+		INSERT INTO t_user_requirement
+		VALUES
+			(
+				UUID(),
+				#{uId},
+				#{rtId},
+				#{urTitle},
+				#{urContent},
+				#{urOfferType},
+				#{urOfferPrice},
+				#{urTrueName},
+				#{urTel},
+				#{urAddress},
+				now(),
+				#{sId},
+				0,
+				#{urGetAddress}
+			)
+	</insert>
+	
+	<!-- 获取用户所有的需求 -->
+	<select id="doGetUserRequirement" resultType="UserRequirement">
+	SELECT
+		t1.UR_ID AS urId,
+		t1.U_ID AS uId,
+		t1.RT_ID AS rtId,
+		t1.UR_TITLE AS urTitle,
+		t1.UR_CONTENT AS urContent,
+		t1.UR_OFFER_TYPE AS urOfferType,
+		t1.UR_OFFER_PRICE AS urOfferPrice,
+		t1.UR_TRUE_NAME AS urTrueName,
+		t1.UR_TEL AS urTel,
+		t1.UR_ADDRESS AS urAddress,
+		t1.UR_CREATE_TIME AS urCreateTime,
+		t1.S_ID AS sId,
+		t1.UR_BROWSER_NUM AS urBrowserNum,
+		t1.UR_GET_ADDRESS AS urGetAddress,
+		t2.RO_STATUS AS roStatus,
+		t2.RO_ID AS roId
+	FROM
+		t_user_requirement t1
+	LEFT JOIN t_requirement_order t2 ON t1.UR_ID = t2.UR_ID
+	WHERE
+		t1.U_ID = #{uId}
+	AND t2.RO_STATUS LIKE '%${status}%'
+	ORDER BY t2.RO_CONFIRM_TIME DESC
+	LIMIT #{start},#{end}
+	</select>
+	<!-- 获取用户发布的需求 -->
+	<select id="doSelectUserRequirement" resultType="UserRequirement">
+	select 
+		t1.UR_ID AS urId
+	from  
+		t_user_requirement t1
+	where 
+		U_ID = #{uId}
+	and 
+		(select 
+			count(1) as num 
+		from 
+			t_requirement_order t2
+		where 
+			t2.UR_ID = t1.UR_ID) = 0
+	</select>
+	<!-- 添加需求订单评价 -->
+	<insert id="doAddRequirementEvaluate">
+		INSERT INTO t_requirement_order_evaluate
+		VALUES
+			(
+				UUID(),
+				#{roId},
+				#{uId},
+				#{roeLevel},
+				#{roeContent},
+				now(),
+				#{sId}
+			)
+	</insert>
+	
+	<!-- 获取用户需求详情 -->
+	<select id="doGetUserRequirementDetail" resultType="UserRequirement">
+	SELECT
+		UR_ID AS urId,
+		U_ID AS uId,
+		RT_ID AS rtId,
+		UR_TITLE AS urTitle,
+		UR_CONTENT AS urContent,
+		UR_OFFER_TYPE AS urOfferType,
+		UR_OFFER_PRICE AS urOfferPrice,
+		UR_TRUE_NAME AS urTrueName,
+		UR_TEL AS urTel,
+		UR_ADDRESS AS urAddress,
+		UR_CREATE_TIME AS urCreateTime,
+		S_ID AS sId,
+		UR_BROWSER_NUM AS urBrowserNum,
+		UR_GET_ADDRESS AS urGetAddress
+	FROM
+		t_user_requirement
+	WHERE
+		UR_ID = #{urId}
+
+	</select>
+	
+	<!-- 获取需求订单信息 -->
+	<select id="doGetUserRequirementOrder" resultType="RequirementOrder">
+	SELECT
+		RO_ID AS roId,
+		UR_ID AS urId,
+		RT_ID AS rtId,
+		RO_CREATE_TIME AS roCreateTime,
+		RO_STATUS AS roStatus,
+		P_TAG AS pTag,
+		RO_TOTAL_PRICE AS roTotalPrice,
+		RO_ORDER_ID AS roOrderId,
+		S_ID AS sId,
+		RO_CONFIRM_TIME AS roConfirmTime,
+		RO_OVER_TIME AS roOverTime,
+		RO_GET_TIME AS roGetTime,
+		RO_VERIFICATION_TIME AS roVerificationTime
+	FROM
+		t_requirement_order
+	WHERE
+		UR_ID = #{urId}
+	</select>
+	
+	<!-- 根据状态获取需求订单信息 -->
+	<select id="doGetRequirementOrderByRoStatus" resultType="RequirementOrder">
+	SELECT
+		RO_ID AS roId,
+		UR_ID AS urId,
+		RO_STATUS AS roStatus
+	FROM
+		t_requirement_order 
+	WHERE
+		 RO_STATUS = 7
+	limit #{i},#{j}		 
+	</select>
+	
+	<!-- 添加商品订单评价 -->
+	<insert id="doAddProductEvaluate">
+		INSERT INTO t_product_evaluate
+		VALUES
+			(
+				UUID(),
+				#{pId},
+				#{podId},
+				#{uId},
+				#{peLevel},
+				#{peContent},
+				now(),
+				#{pTag}
+			)
+	</insert>
+	
+	<!-- 获取用户商品订单评价 -->
+	<select id="doGetUserProductEvaluate" resultMap="doGetUserProductEvaluate">
+		SELECT
+			t1.PE_ID,
+			t1.POD_ID,
+			t1.PE_LEVEL,
+			t1.PE_CONTENT,
+			t1.PE_CREATE_TIME,
+			t2.P_ID,
+			t2.P_NAME,
+			t2.P_DESCRIBE,
+			t3.P_NAME AS picName,
+			t3.P_ID AS picId,
+			t4.U_ID,
+			t4.U_NICKNAME,
+			t4.P_TAG
+		FROM
+			t_product_evaluate t1
+		LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+		LEFT JOIN t_pic t3 ON t2.p_tag = t3.p_tag
+		LEFT JOIN t_user t4 ON t1.U_ID = t4.U_ID
+		WHERE
+			t4.U_ID = #{uId}  
+			
+			AND	t1.PE_LEVEL LIKE '%${peLevel}%'
+		
+			AND t3.P_NO = 0
+	</select>
+	
+	<resultMap type="ProductEvaluate" id="doGetUserProductEvaluate">
+		<id column="PE_ID" property="peId" />
+		<result column="POD_ID" property="podId"/>
+		<result column="PE_LEVEL" property="peLevel"/>
+		<result column="PE_CONTENT" property="peContent"/>
+		<result column="PE_CREATE_TIME" property="peCreateTime"/>
+		<association property="product" javaType="Product">
+			<id column="P_ID" property="pId" />
+			<result column="P_NAME" property="pName" />
+			<result column="P_NOW_PRICE" property="pNowPrice" />
+			<result column="P_DESCRIBE" property="pDescribe" />
+			<result column="P_ORIGINAL_PRICE" property="pOriginalPrice" />
+			<association property="pic" javaType="Pic">
+				<id column="picId" property="pId" />
+				<result column="picName" property="pName" />
+			</association>
+		</association>
+		<association property="user" javaType="User">
+				<id column="U_ID" property="uId" />
+				<result column="U_NICKNAME" property="uNickName" />
+				<result column="P_TAG" property="pTag" />
+			</association>
+	</resultMap>
+	
+	
+	<!-- 获取用户商品订单信息 -->
+	<select id="doGetProductOrderByPoId" resultType="ProductOrder">
+	SELECT
+		PO_ID AS poId,
+		PS_ID AS psId,
+		U_ID AS uId,
+		PO_CREATE_TIME as poCreateTime,
+		PO_TOTAL_PRICE AS poTotalPrice,
+		PO_STATUS AS poStatus,
+		PO_PAY_TIME AS poPayTime,
+		PO_SEND_TIME AS poSendTime,
+		PO_DELIVER_TIME AS poDeliverTime,
+		PO_OVER_TIME AS poOverTime,
+		PO_PAY_CODE AS poPayCode,
+		PO_ORDER_ID AS poOrderId,
+		PO_DEL AS poDel,
+		PO_DELIVER_NAME AS poDeliverName,
+		PO_DELIVER_TEL AS poDeliverTel,
+		PO_DELIVER_ADDRESS AS poDeliverAddress,
+		S_ID AS sId,
+		PO_DELIVER_COMPANY AS poDeliverCompany,
+		PO_DELIVER_CODE AS poDeliverCode
+	FROM
+		`t_product_order`
+	WHERE
+		PO_ID = #{poId}
+	</select>
+	
+	<!-- 获取用户商品订单详情信息 -->
+	<select id="doGetProductOrderDetailByPoId" resultType="ProductOrderDetail">
+	SELECT
+		POD_ID AS podId,
+		P_ID AS pId,
+		PO_ID AS poId,
+		POD_NUM AS podNum,
+		POD_PROPERTY AS podProperty,
+		POD_PRICE AS podPrice,
+		POD_EVALUATE AS podEvaluate
+	FROM
+		t_product_order_detail
+	WHERE
+		PO_ID = #{poId}
+	</select>
+	
+	<!-- 添加商品订单详情 -->
+	<insert id="doAddProductOrderDetail">
+		INSERT INTO t_product_order_detail
+		VALUES
+			(
+				UUID(),
+				#{pId},
+				#{poId},
+				#{podNum},
+				#{podProperty},
+				#{podPrice},
+				#{podEvaluate}
+			)
+	</insert>
+	
+	<!-- 添加热搜 -->
+	<insert id="doAddProductSearch">
+		INSERT INTO t_product_search
+		VALUES
+			(
+				UUID(),
+				#{looseName},
+				1,
+				#{type}
+			)
+	</insert>
+	
+	<!-- 添加商品订单 -->
+	<insert id="doAddProductOrder">
+		INSERT INTO t_product_order
+		VALUES
+			(
+				#{poId},
+				#{psId},
+				#{uId},
+				now(),
+				#{poTotalPrice},
+				#{poStatus},
+				#{poPayTime},
+				#{poSendTime},
+				#{poDeliverTime},
+				#{poOverTime},
+				#{poPayCode},
+				#{poOrderId},
+				1,
+				#{poDeliverName},
+				#{poDeliverTel},
+				#{poDeliverAddress},
+				#{sId},
+				#{poDeliverCompany},
+				#{poDeliverCode}
+			)
+	</insert>
+	
+	<!-- 获取商品筛选属性-->
+	<select id="doGetProductProperty" resultType="ProductProperty">
+	SELECT
+		DISTINCT
+		t3.PP_ID AS ppId,
+		t3.PP_NAME AS ppName,
+		t3.PP_VALUE AS ppValue,
+		t3.PP_TAG AS ppTag,
+		t3.PP_CHOSE_TYPE AS ppChoseType,
+		t3.PP_REQUIRED AS ppRequired
+	FROM
+		t_product_relation_property t1
+	LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+	LEFT JOIN t_product_property t3 ON t1.PP_ID = t3.PP_ID
+	WHERE
+		t2.PTD_ID = #{ptdId}
+	ORDER BY
+		ppTag DESC
+	</select>
+	
+	<!-- 删除商品订单-->
+	<update id="doDelProductOrder">
+		DELETE
+		 FROM 
+		 	t_product_order
+			WHERE
+				 PO_ID = #{poId} 
+				 AND U_ID = #{uId}  
+	</update>
+	
+	<!-- 根据poId删除商品订单-->
+	<update id="doDeleteProductOrder">
+		DELETE
+		 FROM 
+		 	t_product_order
+			WHERE
+				 PO_ID = #{poId} 
+	</update>
+	
+	<!-- 删除店铺商品-->
+	<update id="doDelStoreProduct">
+		UPDATE t_product
+			SET P_DEL = 1
+			WHERE
+				P_ID = #{pId}
+	</update>
+	<!-- 修改商品信息-->
+	<update id="doUpdateProductInfo">
+		UPDATE t_product
+			SET P_NAME = #{pName},
+			 P_DESCRIBE = #{pDesc},
+			 P_ORIGINAL_PRICE = #{pOriginalPrice},
+			 P_NOW_PRICE = #{pNowPrice},
+			 P_STOCK_NUM = #{pStockNum},
+			 P_TOTAL_NUM = #{pTotalNum}
+			WHERE
+				P_ID = #{pId}
+	</update>
+	
+	<!-- 删除商品订单评价 -->
+	<delete id="doDelProductEvaluate" >
+	DELETE
+		FROM
+	t_product_evaluate
+		WHERE
+		PE_ID =#{peId}
+	</delete>
+	
+	<!-- 获取用户所有订单 -->
+	<select id="doGetProductOrder" resultType="ProductOrder">
+	SELECT
+		PO_ID AS poId,
+		PS_ID AS psId,
+		U_ID AS uId,
+		PO_CREATE_TIME AS poCreateTime,
+		PO_TOTAL_PRICE AS poTotalPrice,
+		PO_STATUS AS poStatus,
+		PO_PAY_TIME AS poPayTime,
+		PO_SEND_TIME AS poSendTime,
+		PO_DELIVER_TIME AS poDeliverTime,
+		PO_OVER_TIME AS poOverTime,
+		PO_PAY_CODE AS poPayCode,
+		PO_ORDER_ID AS poOrderId,
+		PO_DEL AS poDel,
+		PO_DELIVER_NAME AS poDeliverName,
+		PO_DELIVER_TEL AS poDeliverTel,
+		PO_DELIVER_ADDRESS AS poDeliverAddress,
+		S_ID AS sId,
+		PO_DELIVER_COMPANY AS poDeliverCompany,
+		PO_DELIVER_CODE AS poDeliverCode
+	FROM
+		`t_product_order`
+	WHERE
+		U_ID = #{uId} 
+	AND PO_STATUS like '%${status}%' 
+	order by 
+		PO_CREATE_TIME	DESC 
+		limit #{i},#{j}
+	</select>
+	
+	<!-- 根据商品id查询商品信息 -->
+	<select id="doGetRecommendProductList" resultMap="doGetRecommendProductList">
+	SELECT
+		t1.P_ID,
+		t1.S_ID,
+		t1.P_NAME,
+		t1.P_BRAND,
+		t1.P_DESCRIBE,
+		t1.P_TAG,
+		t1.P_ORIGINAL_PRICE,
+		t1.P_NOW_PRICE,
+		t1.P_CREATE_TIME,
+		t1.PTD_ID,
+		t1.P_DEL,
+		t1.P_CHECKED,
+		t1.P_WEIGHT,
+		t1.P_HTML,
+		t1.P_BROWSE_NUM,
+		t1.P_HAVE_BOOTH,
+		t1.P_TOTAL_NUM,
+		t1.P_STOCK_NUM,
+		t1.U_ID,
+		t1.P_CHECKED_TIME,
+		t1.P_CHECKED_OPINION,
+		t2.P_ID AS picId,
+		t2.P_NAME AS picName
+	FROM
+	t_product t1
+	LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG
+	WHERE
+		t2.P_NO = 0
+	AND t1.PTD_ID = #{ptdId} 
+	AND t1.P_DEL = 0 limit #{i},#{j}
+		</select>
+	<resultMap type="Product" id="doGetRecommendProductList">
+		<id column="P_ID" property="pId" />
+		<result column="S_ID" property="sId"/>
+		<result column="P_NAME" property="pName"/>
+		<result column="P_BRAND" property="pBrand"/>
+		<result column="P_DESCRIBE" property="pDescribe"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_CREATE_TIME" property="pCreateTime"/>
+		<result column="PTD_ID" property="ptdId"/>
+		<result column="P_DEL" property="pDel"/>
+		<result column="P_CHECKED" property="pChecked"/>
+		<result column="P_WEIGHT" property="pWeight"/>
+		<result column="P_HTML" property="pHtml"/>
+		<result column="P_BROWSE_NUM" property="pBrowseNum"/>
+		<result column="P_HAVE_BOOTH" property="pHaveBooth"/>
+		<result column="P_TOTAL_NUM" property="pTotalNum"/>
+		<result column="P_STOCK_NUM" property="pStockNum"/>
+		<result column="U_ID" property="uId"/>
+		<result column="P_CHECKED_TIME" property="pCheckedTime"/>
+		<result column="P_CHECKED_OPINION" property="pCheckedOpinion"/>
+		<association property="pic" javaType="Pic">
+			<id column="picId" property="pId" />
+			<result column="picName" property="pName" />
+		</association>
+	</resultMap>
+		
+		
+		<!-- 获取需求订单信息根据roId -->
+	<select id="doGetUserRequirementOrderByRoId" resultType="RequirementOrder">
+	SELECT
+		RO_ID AS roId,
+		UR_ID AS urId,
+		RT_ID AS rtId,
+		RO_CREATE_TIME AS roCreateTime,
+		RO_STATUS AS roStatus,
+		P_TAG AS pTag,
+		RO_TOTAL_PRICE AS roTotalPrice,
+		RO_ORDER_ID AS roOrderId,
+		S_ID AS sId,
+		RO_CONFIRM_TIME AS roConfirmTime,
+		RO_OVER_TIME AS roOverTime,
+		RO_GET_TIME AS roGetTime,
+		RO_VERIFICATION_TIME AS roVerificationTime
+	FROM
+		t_requirement_order
+	WHERE
+		RO_ID = #{roId}
+	</select>
+	
+	<!-- 删除用户需求订单 -->
+	<delete id="doDelUserRequirementOrder" >
+	DELETE
+		FROM
+	t_requirement_order
+		WHERE
+		RO_ID = #{roId}
+	</delete>
+	
+	<!-- 删除用户需求 -->
+	<delete id="doDelUserRequirement" >
+	DELETE
+		FROM
+	t_user_requirement
+		WHERE
+		UR_ID = #{urId}
+	</delete>
+	
+	<!-- 生成用户需求订单-->
+	<insert id="doAddUserRequirementOrder">
+		INSERT INTO t_requirement_order
+		VALUES
+			(
+				UUID(),
+				#{urId},
+				#{rtId},
+				NOW(),
+				7,
+				'',
+				#{roTotalPrice},
+				#{orOrderId},
+				#{sId},
+				'',
+				'',
+				'',
+				''
+			)
+	</insert>
+	
+	<!-- 获取需求中心的需求-->
+	<resultMap type="UserRequirement" id="doGetAllRequirement">
+		<id column="UR_ID" property="urId" />
+		<result column="RT_ID" property="rtId"/>
+		<result column="UR_TITLE" property="urTitle"/>
+		<result column="UR_CONTENT" property="urContent"/>
+		<result column="UR_OFFER_TYPE" property="urOfferType"/>
+		<result column="UR_OFFER_PRICE" property="urOfferPrice"/>
+		<result column="UR_CREATE_TIME" property="urCreateTime"/>
+		<result column="UR_BROWSER_NUM" property="urBrowserNum"/>
+		<result column="UR_GET_ADDRESS" property="urGetAddress"/>
+		<association property="requirementOrder" javaType="RequirementOrder">
+			<id column="RO_ID" property="roId" />
+			<result column="RO_STATUS" property="roStatus" />
+		</association>
+		<association property="requirementType" javaType="RequirementType">
+			<result column="RT_NAME" property="rtName" />
+		</association>
+	</resultMap>
+	<select id="doGetAllRequirement" resultMap="doGetAllRequirement">
+	SELECT
+		t1.UR_ID,
+		t1.RT_ID,
+		t3.RT_NAME,
+		t1.UR_TITLE,
+		t1.UR_CONTENT,
+		t1.UR_OFFER_TYPE,
+		t1.UR_OFFER_PRICE,
+		t1.UR_CREATE_TIME,
+		t1.UR_BROWSER_NUM,
+		t1.UR_GET_ADDRESS,
+		t2.RO_STATUS,
+		t2.RO_ID
+	FROM
+		t_user_requirement t1
+	LEFT JOIN t_requirement_order t2 ON t1.UR_ID = t2.UR_ID
+	LEFT JOIN t_requirement_type t3 ON t1.RT_ID = t3.RT_ID
+	WHERE
+	t2.RO_STATUS IN (0,7) 
+	AND 
+	(t1.S_ID = #{sId} OR t1.S_ID = '')
+	order by 
+	<if test='priceSort == "0"'>
+		t1.UR_OFFER_PRICE DESC
+	</if>
+	<if test='priceSort == "1"'>
+		t1.UR_OFFER_PRICE ASC
+	</if>
+	<if test='timeSort == "0"'>
+		t1.UR_CREATE_TIME DESC
+	</if>
+	<if test='timeSort == "1"'>
+		t1.UR_CREATE_TIME ASC
+	</if>
+	<if test='hotSort == "0"'>
+		t1.UR_BROWSER_NUM DESC
+	</if>
+	limit #{start},#{end}
+	</select>
+	
+	<!-- 获取商户所有订单 -->
+	<select id="doGetStoreProductOrder" resultType="ProductOrder">
+	SELECT
+		PO_ID AS poId,
+		PS_ID AS psId,
+		U_ID AS uId,
+		PO_CREATE_TIME poCreateTime,
+		PO_TOTAL_PRICE AS poTotalPrice,
+		PO_STATUS AS poStatus,
+		PO_PAY_TIME AS poPayTime,
+		PO_SEND_TIME AS poSendTime,
+		PO_DELIVER_TIME AS poDeliverTime,
+		PO_OVER_TIME AS poOverTime,
+		PO_PAY_CODE AS poPayCode,
+		PO_ORDER_ID AS poOrderId,
+		PO_DEL AS poDel,
+		PO_DELIVER_NAME AS poDeliverName,
+		PO_DELIVER_TEL AS poDeliverTel,
+		PO_DELIVER_ADDRESS AS poDeliverAddress,
+		S_ID AS sId,
+		PO_DELIVER_COMPANY AS poDeliverCompany,
+		PO_DELIVER_CODE AS poDeliverCode
+	FROM
+		`t_product_order`
+	WHERE
+		S_ID = #{sId} AND PO_STATUS LIKE '%${status}%' limit #{i},#{j}
+	</select>
+	
+	<!-- 获取商户所有的需求 -->
+	<select id="doGetStoreRequirement" resultType="UserRequirement">
+	SELECT
+		t1.UR_ID AS urId,
+		t1.U_ID AS uId,
+		t1.RT_ID AS rtId,
+		t1.UR_TITLE AS urTitle,
+		t1.UR_CONTENT AS urContent,
+		t1.UR_OFFER_TYPE AS urOfferType,
+		t1.UR_OFFER_PRICE AS urOfferPrice,
+		t1.UR_TRUE_NAME AS urTrueName,
+		t1.UR_TEL AS urTel,
+		t1.UR_ADDRESS AS urAddress,
+		t1.UR_CREATE_TIME AS urCreateTime,
+		t1.S_ID AS sId,
+		t1.UR_BROWSER_NUM AS urBrowserNum,
+		t1.UR_GET_ADDRESS AS urGetAddress,
+		t2.RO_STATUS AS roStatus,
+		t2.RO_ID AS roId
+	FROM
+		t_user_requirement t1
+	LEFT JOIN t_requirement_order t2 ON t1.UR_ID = t2.UR_ID
+	WHERE
+		t1.S_ID = #{sId} AND t2.RO_STATUS LIKE '%${roStatus}%'
+		limit #{i},#{j}
+	</select>
+	
+	<!-- 获取商户所有的需求 -->
+	<select id="doGetStoreApplyRequirement" resultType="StoreApplyRequirement">
+	SELECT
+		RO_ID AS roId
+	FROM
+		t_store_apply_requirement 
+	WHERE
+		S_ID = #{sId} AND SAR_STATUS = 0
+		limit #{i},#{j}
+	</select>
+	
+	<!-- 获取所有未确认的申请接单信息 -->
+	<select id="doGetStoreApplyRequirementByRoId" resultType="StoreApplyRequirement">
+	SELECT
+		S_ID AS sId
+	FROM
+		t_store_apply_requirement 
+	WHERE
+		RO_ID = #{roId} 
+	AND SAR_STATUS = 0
+	</select>
+	
+	<!-- 修改商品访问次数-->
+	<update id="doUpdateProductBrowseNum">
+		UPDATE t_product
+			SET P_BROWSE_NUM = P_BROWSE_NUM + 1
+			WHERE
+				P_ID = #{pId}
+	</update>
+	
+	<!-- 修改用户需求访问次数-->
+	<update id="doUpdateRequirementBrowseNum">
+		UPDATE t_user_requirement
+			SET UR_BROWSER_NUM = UR_BROWSER_NUM + 1
+			WHERE
+				 UR_ID = #{urId} 
+	</update>
+	
+	<!-- 修改用户需求访问次数-->
+	<update id="doUpdateUserRequirementSId">
+		UPDATE t_user_requirement
+			SET S_ID = #{sId}
+			<if test="urOfferPrice != null  and urOfferPrice !='' and urOfferPrice != '0'">
+				,UR_OFFER_PRICE = #{urOfferPrice}					
+			</if>
+			WHERE
+				 UR_ID = #{urId} 
+	</update>
+	
+	<!-- 修改用户需求订单状态-->
+	<update id="doUpdateRequirementOrderStatus">
+		UPDATE t_requirement_order
+			SET RO_STATUS = #{status},
+			<if test="status != null  and status !='' and status == 4">
+				RO_GET_TIME = NOW()				
+			</if>
+			<if test="status != null  and status !='' and status == 6">
+				RO_OVER_TIME = NOW()				
+			</if>
+			<if test="status != null  and status !='' and status == 2">
+				RO_OVER_TIME = NOW()				
+			</if>
+			<if test="status != null  and status !='' and status == 5">
+				RO_VERIFICATION_TIME = NOW()				
+			</if>
+			<if test="pTag != null  and pTag !=''">
+				,P_TAG = #{pTag}					
+			</if>
+			WHERE
+				 RO_ID = #{roId} 
+	</update>
+	
+	<!-- 修改商品订单详情评价状态-->
+	<update id="doUpdateProductOrderDetail">
+		UPDATE t_product_order_detail
+			SET POD_EVALUATE = #{podEvaluate}
+			WHERE
+				 POD_ID = #{podId} 
+	</update>
+	
+	<!-- 修改商品订单状态-->
+	<update id="doUpdateProductOrderStatus">
+		UPDATE t_product_order
+			SET PO_STATUS = #{status},
+			PO_OVER_TIME = now()
+			WHERE
+				 PO_ID = #{poId} 
+	</update>
+	
+	<!-- 根据podId获取商品订单详情 -->
+	<select id="doGetProductOrderDetailByPodId" resultType="ProductOrderDetail">
+	SELECT
+		POD_ID AS podId,
+		P_ID AS pId,
+		PO_ID AS poId,
+		POD_NUM AS podNum,
+		POD_PROPERTY AS podProperty,
+		POD_PRICE AS podPrice,
+		POD_EVALUATE AS podEvaluate
+	FROM
+		`t_product_order_detail`
+	WHERE
+		POD_ID = #{podId}
+	</select>
+	
+	<!-- 修改商品库存数量-->
+	<update id="doUpdateProductStockNum">
+		UPDATE t_product
+			SET P_STOCK_NUM = P_STOCK_NUM - #{num}
+			WHERE
+				 P_ID = #{pId} 
+	</update>
+	
+	<!-- 修改用户需求订单信息-->
+	<update id="doUpdateRequirementOrder">
+		UPDATE t_requirement_order
+			SET RO_ID = #{roId},
+		UR_ID = #{urId},
+		RT_ID = #{rtId},
+		RO_CREATE_TIME = #{roCreateTime},
+		RO_STATUS = #{roStatus},
+		RO_TOTAL_PRICE = #{roTotalPrice},
+		RO_ORDER_ID = #{roOrderId},
+		S_ID = #{sId},
+		RO_CONFIRM_TIME = #{roConfirmTime},
+		RO_OVER_TIME = #{roOverTime},
+		RO_GET_TIME = #{roGetTime},
+		RO_VERIFICATION_TIME = #{roVerificationTime}
+			WHERE
+				 RO_ID = #{roId} 
+	</update>
+	
+	<!-- 获取店铺最大接单金额 -->
+	<select id="doGetMaxUserRequirementOrder" resultType="double">
+	SELECT
+		MAX(RO_TOTAL_PRICE)
+	FROM
+		`t_requirement_order`
+	WHERE
+		RO_STATUS IN (2, 6)
+	AND S_ID = #{sId}
+	</select>
+	
+	<!-- 根据订单状态获取商铺订单数量-->
+	<select id="doGetUserRequirementOrderNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		`t_requirement_order`
+	WHERE
+		S_ID = #{sId} 
+	AND RO_STATUS in (2,6)
+	</select>
+	
+	<!-- 获取接单商铺的数量-->
+	<select id="doGetStoreApplyRequirementNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		`t_store_apply_requirement`
+	WHERE
+		S_ID = #{sId} 
+	</select>
+	
+	<!-- 获取接单商铺的数量-->
+	<select id="getStoreApplyRequirementNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		`t_store_apply_requirement`
+	WHERE
+		RO_ID = #{roId}
+	AND
+		SAR_STATUS = 0 
+	</select>
+	
+	<!-- 获取每日成交额根据日期和sId-->
+	<select id="doGetUserRequirementOrderMoneyByDate" resultType="double">
+	SELECT
+		COALESCE(SUM(RO_TOTAL_PRICE),0)
+	FROM
+		`t_requirement_order`
+	WHERE
+		S_ID = #{sId}
+	AND RO_OVER_TIME LIKE '%${date}%'
+	</select>
+	
+	<!-- 获取累计交易额-->
+	<select id="doGetUserRequirementOrderTotalMoney" resultType="double">
+	SELECT
+		COALESCE(SUM(RO_TOTAL_PRICE),0)
+	FROM
+		`t_requirement_order`
+	WHERE
+		S_ID = #{sId}
+	</select>
+	
+	
+	<!-- 获取需求单价最高的需求类别-->
+	<select id="doGetRequirementTypeMaxPrice" resultType="RequirementType">
+	SELECT
+		RT_ID AS rtId,
+		RT_NAME AS rtName
+	FROM
+		t_requirement_type
+	WHERE
+		RT_ID = (
+			SELECT
+				RT_ID
+			FROM
+				t_requirement_order
+			WHERE
+				ro_over_time != '' and S_ID = #{sId}
+			HAVING
+				MAX(RO_TOTAL_PRICE)
+		)
+	</select>
+	
+	<!-- 获取接单数量最多的需求类别-->
+	<select id="doGetRequirementTypeMaxOrderNum" resultType="RequirementType">
+	SELECT
+		RT_ID AS rtId,
+		RT_NAME AS rtName
+	FROM
+		t_requirement_type
+	WHERE
+		RT_ID = (
+			SELECT
+				RT_ID
+			FROM
+				(
+					SELECT
+						RT_ID,
+						COUNT(0) AS count
+					FROM
+						t_requirement_order
+					WHERE
+						RO_OVER_TIME != ''
+					AND S_ID = #{sId}
+					GROUP BY
+						RT_ID
+					ORDER BY
+						count DESC
+					LIMIT 1
+				) t1
+		)
+	</select>
+	
+	<!-- 成交额贡献最高的需求类别-->
+	<select id="doGetRequirementTypeMaxTotalMoney" resultType="RequirementType">
+	SELECT
+	RT_ID AS rtId,
+	RT_NAME AS rtName
+FROM
+	t_requirement_type
+WHERE
+	RT_ID = (
+		SELECT
+			RT_ID
+		FROM
+			(
+				SELECT
+					COALESCE(SUM(RO_TOTAL_PRICE),0) AS sum,
+					RT_ID
+				FROM
+					t_requirement_order
+				WHERE
+					ro_over_time != ''
+				GROUP BY
+					RT_ID
+				ORDER BY
+					sum DESC
+				LIMIT 1
+			) t1
+	)
+	</select>
+	<!-- 查询需求类别信息-->
+	<select id="doGetRequirementType" resultType="RequirementType">
+	SELECT
+		RT_ID AS rtId,
+		RT_NAME AS rtName
+	FROM
+		t_requirement_type
+	WHERE
+		RT_ID = #{rtId}
+	</select>
+	<!-- 查询所有需求类别信息-->
+	<select id="doGetAllRequirementType" resultType="RequirementType">
+	SELECT
+		RT_ID AS rtId,
+		RT_NAME AS rtName
+	FROM
+		t_requirement_type
+	</select>
+	<!-- 获取商铺今日商品订单数-->
+	<select id="doGetTodayProductOrderNum" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId} AND
+		 PO_OVER_TIME like '%${date}%'
+	</select>
+	
+	
+	<!-- 根据订单状态获取订单数量-->
+	<select id="doProductOrderNumByStatus" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_product_order
+		WHERE
+			S_ID = #{sId} 
+		AND PO_STATUS = #{i}
+	</select>
+	
+	<!-- 获取店铺商品订单总交易额-->
+	<select id="doGetProductOrderTotalMoney" resultType="double">
+		SELECT
+			COALESCE(SUM(PO_TOTAL_PRICE),0)
+		FROM
+			`t_product_order`
+		WHERE
+			PO_OVER_TIME != ''
+		AND S_ID = #{sId}
+	</select>
+	
+	<!-- 获取店铺商品订单每日成交额-->
+	<select id="doGetProductOrderTotalMoneyByDate" resultType="double">
+		SELECT
+			COALESCE(SUM(PO_TOTAL_PRICE),0)
+		FROM
+			`t_product_order`
+		WHERE
+			S_ID = #{sId} 
+		and PO_OVER_TIME like '%${date}%'
+	</select>
+	
+	<!-- 获取所有商品信息根据筛选条件-->
+	<select id="doGetProductList" resultType="Product">
+			SELECT
+	t1.P_ID as pId,
+	t1.P_NAME as pName,
+	t1.P_TAG as pTag,
+	t1.PTD_ID as ptdId,
+	t1.P_HTML as pHtml,
+	t1.P_NOW_PRICE as pNowPrice,
+	t1.P_ORIGINAL_PRICE as pOriginalPrice,
+	t1.P_DESCRIBE as pDescribe,
+	t1.P_WEIGHT as pWeight,
+	t1.P_TOTAL_NUM as pTotalNum,
+	t1.P_STOCK_NUM as pStockNum,
+	t1.S_ID as sId
+FROM
+	t_product t1
+WHERE
+	t1.P_ID IN (
+		SELECT
+			P_ID
+		FROM
+				(
+			SELECT
+				P_ID,
+				GROUP_CONCAT(PP_ID) AS ppId
+			FROM
+				t_product_relation_property
+			GROUP BY
+				P_ID
+		) AS t3
+		WHERE
+					1=1
+							<if test="properties!= null  and properties !=''">
+								<foreach collection="properties" item="plist">
+									AND t3.ppId like '%${plist}%'
+								</foreach>
+							</if>
+	)
+		AND t1.P_DEL = 0
+	<if test="lowPrice!= null  and lowPrice !=''">
+		AND t1.P_NOW_PRICE &gt;= #{lowPrice}
+	</if>
+	<if test="highPrice!= null  and highPrice !=''">
+		AND t1.P_NOW_PRICE &lt;= #{highPrice}
+	</if>
+	AND t1.PTD_ID = #{ptdId} and t1.P_DEL = 0
+	<if test="userType!= null  and userType !='' and userType == '0'">
+		AND t1.P_CHECKED = 1
+	</if>
+	ORDER BY
+		<if test='priceSort=="1"'>
+			t1.P_NOW_PRICE ASC
+		</if>
+		<if test='priceSort=="0"'>
+			t1.P_NOW_PRICE DESC
+		</if>
+		<if test='saleSort=="1"'>
+			t1.P_TOTAL_NUM - t1.P_STOCK_NUM DESC
+		</if>
+		<if test='saleSort=="0"'>
+			t1.P_TOTAL_NUM - t1.P_STOCK_NUM ASC
+		</if>
+		<if test='saleSort=="" and priceSort==""'>
+			t1.P_WEIGHT DESC
+		</if>
+	 LIMIT #{i},#{j}
+	</select>
+	
+	<!-- 获取热门需求的需求订单id-->
+	<select id="doGetHotRequirementId" resultMap="doGetHotRequirementId">
+		SELECT
+			RO_ID as roId,
+			COUNT(0) as count,
+			S_ID as sId
+		FROM
+			`t_store_apply_requirement` where S_ID != #{sId}
+		GROUP BY
+			RO_ID
+		ORDER BY
+		<if test='hotSort=="0"'>
+		COUNT(0) DESC
+		</if>
+		<if test='hotSort=="1"'>
+		COUNT(0) ASC
+		</if>
+		LIMIT #{start},#{end}
+	</select>
+	<resultMap id="doGetHotRequirementId" type="java.util.Map">  
+        <result column="roId" property="roId" jdbcType="VARCHAR"/>  
+        <result column="count" property="count" jdbcType="VARCHAR"/>  
+    </resultMap>  
+	
+    
+    <!-- 获取用户需求订单评价 -->
+	<select id="doGetUserRequirementEvaluate" resultType="RequirementOrderEvaluate">
+		SELECT
+			ROE_ID AS roeId,
+			RO_ID AS roId,
+			U_ID AS uId,
+			ROE_LEVEL AS roeLevel,
+			ROE_CONTENT AS roeContent,
+			ROE_CREATE_TIME AS roeCreateTime,
+			S_ID as sId
+		FROM
+			`t_requirement_order_evaluate`
+		WHERE
+			U_ID = #{uId}
+			<if test='roeLevel != "3"'>
+			AND	ROE_LEVEL = #{roeLevel}
+			</if>
+	</select>
+	
+	 <!-- 获取商品评价 -->
+	<select id="doGetProductEvaluate" resultType="ProductEvaluate">
+		SELECT
+			PE_ID AS peId,
+			P_ID AS pId,
+			POD_ID AS podId,
+			U_ID AS uId,
+			PE_LEVEL AS peLevel,
+			PE_CONTENT AS peContent,
+			P_TAG AS pTag,
+			PE_CREATE_TIME AS peCreateTime
+		FROM
+			t_product_evaluate
+		GROUP BY
+			PE_ID
+		having
+			P_ID = #{pId}  
+			
+			AND	PE_LEVEL LIKE '%${peLevel}%'
+		
+			limit #{index},#{size}
+	</select>
+	
+	<!-- 获取所有的商品并将商品信息添加到索引库-->
+	<select id="getProduct" resultType="com.service.extra.mall.model.vo.ProductVo">
+	SELECT
+		t1.P_ID AS pId,
+		t1.P_NAME AS pName,
+		t1.P_DESCRIBE AS pDescribe,
+		t1.P_TAG AS pTag,
+		t1.P_ORIGINAL_PRICE AS pOriginalPrice,
+		t1.P_NOW_PRICE AS pNowPrice,
+		t1.P_CREATE_TIME AS createTime,
+		t1.P_TOTAL_NUM AS pTotalNum,
+		t1.P_STOCK_NUM AS pStockNum,
+		t1.P_WEIGHT AS pWeight,
+		t1.PTD_ID AS ptdId,
+		t1.P_HTML AS pHtml,
+		t2.PTD_NAME AS typeName,
+		GROUP_CONCAT(t4.PP_VALUE) AS PPname,
+		t5.P_NAME AS picName
+	FROM
+		t_product t1
+	LEFT JOIN t_product_type_detail t2 ON t1.PTD_ID = t2.PTD_ID
+	LEFT JOIN t_product_relation_property t3 ON t3.P_ID = t1.P_ID
+	LEFT JOIN t_product_property t4 ON t4.PP_ID = t3.PP_ID
+	LEFT JOIN t_pic t5 ON t1.P_TAG = t5.P_TAG
+	WHERE
+		t5.P_NO = 0
+	AND t1.P_DEL = 0
+	GROUP BY
+		t1.P_NAME
+	</select>
+	
+	<!-- 修改热搜访问次数-->
+	<update id="doUpdateProductSearchNum">
+		UPDATE t_product_search
+			SET PS_NUM = PS_NUM +1 
+			WHERE
+				 PS_ID = #{psId} 
+	</update>
+	
+	 <!-- 获取热搜主键标识 -->
+	<select id="doGetProductSearchId" resultType="String">
+		SELECT
+			PS_ID 
+		FROM
+			t_product_search
+		WHERE
+			PS_TYPE= #{type} AND PS_NAME = #{looseName}
+	</select>
+	
+	 <!-- 获取热搜根据类型 -->
+	<select id="doGetHotSearch" resultType="ProductSearch">
+		SELECT
+			PS_ID as psId,
+			PS_NAME as psName,
+			PS_NUM as psNum,
+			PS_TYPE as psType
+		FROM
+			t_product_search
+		WHERE
+			PS_TYPE= #{type} order by PS_NUM desc limit 6
+	</select>
+	
+	<!-- 获取店铺商品信息 -->
+	<select id="doGetStoreProduct" resultType="Product">
+	SELECT
+		P_ID AS pId,
+		S_ID AS sId,
+		P_NAME AS pName,
+		P_BRAND AS pBrand,
+		P_DESCRIBE AS pDescribe,
+		P_TAG AS pTag,
+		P_ORIGINAL_PRICE AS pOriginalPrice,
+		P_NOW_PRICE AS pNowPrice,
+		P_CREATE_TIME AS pCreateTime,
+		PTD_ID AS ptdId,
+		P_DEL AS pDel,
+		P_CHECKED AS pChecked,
+		P_WEIGHT AS pWeight,
+		P_HTML AS pHtml,
+		P_BROWSE_NUM AS pBrowseNum,
+		P_HAVE_BOOTH AS pHaveBooth,
+		P_TOTAL_NUM AS pTotalNum,
+		P_STOCK_NUM AS pStockNum,
+		U_ID AS uId,
+		P_CHECKED_TIME AS pCheckedTime,
+		P_CHECKED_OPINION AS pCheckedOpinion
+	FROM
+		t_product
+	WHERE S_ID = #{sId}  
+	AND P_CHECKED = 1
+	AND P_DEL = 0
+	<if test='ptdId!=""'>
+			AND PTD_ID = #{ptdId} 
+	</if>
+	ORDER BY
+		<if test='priceSort=="1"'>
+			P_NOW_PRICE ASC
+		</if>
+		<if test='priceSort=="0"'>
+			P_NOW_PRICE DESC
+		</if>
+		<if test='saleSort=="1"'>
+			P_TOTAL_NUM - P_STOCK_NUM ASC
+		</if>
+		<if test='saleSort=="0"'>
+			P_TOTAL_NUM - P_STOCK_NUM DESC
+		</if>
+		<if test='saleSort=="" and priceSort==""'>
+			P_WEIGHT DESC
+		</if>
+		limit #{start},#{end}
+	</select>
+	
+	<!-- 获取用户商品订单信息 -->
+	<select id="doGetProductOrderByPayCode" resultType="ProductOrder">
+	SELECT
+		PO_ID AS poId,
+		PS_ID AS psId,
+		U_ID AS uId,
+		PO_CREATE_TIME poCreateTime,
+		PO_TOTAL_PRICE AS poTotalPrice,
+		PO_STATUS AS poStatus,
+		PO_PAY_TIME AS poPayTime,
+		PO_SEND_TIME AS poSendTime,
+		PO_DELIVER_TIME AS poDeliverTime,
+		PO_OVER_TIME AS poOverTime,
+		PO_PAY_CODE AS poPayCode,
+		PO_ORDER_ID AS poOrderId,
+		PO_DEL AS poDel,
+		PO_DELIVER_NAME AS poDeliverName,
+		PO_DELIVER_TEL AS poDeliverTel,
+		PO_DELIVER_ADDRESS AS poDeliverAddress,
+		S_ID AS sId,
+		PO_DELIVER_COMPANY AS poDeliverCompany,
+		PO_DELIVER_CODE AS poDeliverCode
+	FROM
+		`t_product_order`
+	WHERE
+		PO_PAY_CODE = #{payCode}
+	</select>
+	
+	<!-- 修改商品订单信息-->
+	<update id="doUpdateProductOrder">
+		UPDATE t_product_order
+			SET 
+			PO_ID = #{poId},
+			PS_ID = #{psId},
+			U_ID = #{uId},
+			PO_CREATE_TIME = #{poCreateTime},
+			PO_TOTAL_PRICE = #{poTotalPrice},
+			PO_STATUS = #{poStatus},
+			PO_PAY_TIME = #{poPayTime},
+			PO_SEND_TIME = #{poSendTime},
+			PO_DELIVER_TIME = #{poDeliverTime},
+			PO_OVER_TIME = #{poOverTime},
+			PO_PAY_CODE = #{poPayCode},
+			PO_ORDER_ID = #{poOrderId},
+			PO_DEL = #{poDel},
+			PO_DELIVER_NAME = #{poDeliverName},
+			PO_DELIVER_TEL = #{poDeliverTel},
+			PO_DELIVER_ADDRESS = #{poDeliverAddress},
+			S_ID = #{sId},
+			PO_DELIVER_COMPANY = #{poDeliverCompany},
+			PO_DELIVER_CODE = #{poDeliverCode},
+			WHERE
+				 PO_ID = #{poId} 
+	</update>
+	
+	<!-- 修改商品订单详情价格-->
+	<update id="doUpdateProductOrderDetailPrice">
+		UPDATE t_product_order_detail
+			SET POD_NUM = #{num} 
+			WHERE
+				 POD_ID = #{podId} 
+	</update>
+	
+	 <!-- 获取商品关联的属性 -->
+	<select id="doGetProductPropertyByPId" resultType="ProductProperty">
+		SELECT
+		t2.PP_ID as ppId,
+		t2.PP_NAME as ppName,
+		t2.PP_VALUE as ppValue,
+		t2.PP_TAG as ppTag,
+		t2.PP_CHOSE_TYPE as ppChoseType,
+		t2.PP_REQUIRED as ppRequired
+	FROM
+		`t_product_relation_property` t1
+	LEFT JOIN t_product_property t2 ON t1.PP_ID = t2.PP_ID
+	WHERE
+		t1.P_ID = #{pId}
+	</select>
+	
+	 <!-- 获取主页面推荐商品类别-->
+	<select id="doGetProductTypeByRecommend" resultType="ProductType">
+	SELECT
+		PT_ID AS ptId,
+		PT_NAME AS ptName
+	FROM
+		t_product_type
+		limit 4
+	</select>
+	
+	<!-- 分页获取默认推荐的商品列表接口 -->
+	<resultMap type="Product" id="getDefaultRecommendProductList">
+		<id column="P_ID" property="pId" />
+		<result column="P_NAME" property="pName"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_BROWSE_NUM" property="pBrowseNum"/>
+		<association property="pic" javaType="Pic">
+			<result column="PIC_NAME" property="picName" />
+		</association>
+	</resultMap>
+	<select id="getDefaultRecommendProductList" resultMap="getDefaultRecommendProductList">
+		SELECT
+			t1.P_ID,
+			t1.P_NAME,
+			t1.P_ORIGINAL_PRICE,
+			t1.P_NOW_PRICE,
+			t1.P_BROWSE_NUM,
+			t2.P_NAME AS PIC_NAME
+		FROM
+			(
+				SELECT
+					P_ID,
+					P_NAME,
+					P_ORIGINAL_PRICE,
+					P_NOW_PRICE,
+					P_BROWSE_NUM,
+					P_TAG
+				FROM
+					t_product
+				WHERE
+					P_DEL = 0
+				AND P_CHECKED = 1
+				AND S_ID IN (
+					SELECT
+						S_ID
+					FROM
+						t_store
+					WHERE
+						AC_ID = #{acId}
+				)
+				ORDER BY
+					P_WEIGHT DESC
+				LIMIT #{record},
+				#{pageSize}
+			) t1
+		LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG AND t2.P_NO = 0
+	</select>
+	
+	<!-- 根据用户足迹和订单分页获取默认推荐的商品列表接口接口 -->
+	<resultMap type="Product" id="getRecommendProductListOfUser">
+		<id column="P_ID" property="pId" />
+		<result column="P_NAME" property="pName"/>
+		<result column="P_ORIGINAL_PRICE" property="pOriginalPrice"/>
+		<result column="P_NOW_PRICE" property="pNowPrice"/>
+		<result column="P_BROWSE_NUM" property="pBrowseNum"/>
+		<association property="pic" javaType="Pic">
+			<result column="PIC_NAME" property="picName" />
+		</association>
+	</resultMap>
+	<select id="getRecommendProductListOfUser" resultMap="getRecommendProductListOfUser">
+		SELECT
+			t1.P_ID,
+			t1.P_NAME,
+			t1.P_ORIGINAL_PRICE,
+			t1.P_NOW_PRICE,
+			t1.P_BROWSE_NUM,
+			t2.P_NAME AS PIC_NAME
+		FROM
+			(
+				SELECT
+					P_ID,
+					P_NAME,
+					P_ORIGINAL_PRICE,
+					P_NOW_PRICE,
+					P_BROWSE_NUM,
+					P_TAG
+				FROM
+					t_product
+				WHERE
+				P_DEL = 0
+				AND P_CHECKED = 1
+				AND S_ID IN (
+					SELECT
+						S_ID
+					FROM
+						t_store
+					WHERE
+						AC_ID = #{acId}
+				)
+				ORDER BY
+					PTD_ID IN (
+						SELECT
+							PTD_ID
+						FROM
+							t_product
+						WHERE
+							P_ID IN (
+								SELECT
+									P_ID
+								FROM
+									t_user_footprint
+								WHERE
+									U_ID = #{uId}
+							)
+						OR P_ID IN (
+							SELECT
+								P_ID
+							FROM
+								t_product_order_detail
+							WHERE
+								PO_ID IN (
+									SELECT
+										PO_ID
+									FROM
+										t_product_order
+									WHERE
+										U_ID = #{uId}
+								)
+						)
+					) DESC,
+					P_WEIGHT DESC
+				LIMIT #{record},
+				#{pageSize}
+			) t1
+		LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG AND t2.P_NO = 0
+	</select>
+	
+	<!-- 根据商品大类表id查询商品所有的二级类-->
+	<select id="getProductTypeDetailList" resultType="ProductTypeDetail">
+		SELECT
+		PTD_ID AS ptdId,
+		PTD_NAME AS ptdName
+	FROM
+		t_product_type_detail
+	WHERE
+		PTD_FATHER_ID = #{ptId}
+	</select>
+	
+	<!-- 根据店铺对应的ptdId查询商品所有的二级类-->
+	<select id="getProductTypeDetail" resultType="ProductTypeDetail">
+	SELECT
+		PTD_ID AS ptdId,
+		PTD_NAME AS ptdName
+	FROM
+		t_product_type_detail
+	WHERE
+		PTD_ID = #{ptdId}
+	</select>
+	
+	<!-- 查询二级类下的所有底层类别-->
+	<select id="getBottomProductTypeDetail" resultType="ProductTypeDetail">
+		SELECT
+			PTD_ID AS ptdId,
+			PTD_NAME AS ptdName,
+			picName
+		FROM
+			v_last_product_type_pic
+		WHERE
+			PTD_ID LIKE concat(concat(#{fatherId}), '%')
+	</select>
+	
+	<!--获取评价数量 -->
+	<select id="getEvaluesNum" resultType="int">
+		SELECT COUNT(0)
+		FROM 
+			t_product_evaluate 
+		WHERE 
+			P_ID = #{pId}
+		AND 
+			PE_LEVEL LIKE '%${peLevel}%'
+		
+	</select>
+	<!--获取图片信息根据图片id -->
+	<select id="getPicByPid" resultType="Pic">
+	SELECT
+		P_ID as pId,
+		P_FILE_NAME as fileName,
+		P_NAME as pName,
+		P_NO as pNo
+	FROM
+		t_pic
+	WHERE
+		P_ID = #{picId}
+	</select>
+	<!--获取图片信息根据图片pTag -->
+	<select id="getPicByPtag" resultType="Pic">
+	SELECT
+		P_ID as pId,
+		P_FILE_NAME as fileName,
+		P_NAME as pName,
+		P_NO as pNo
+	FROM
+		t_pic
+	WHERE
+		P_TAG = #{pTag}
+	</select>
+	<!--获取图片信息根据图片pTag -->
+	<select id="getPicByPicFileNameAndPicName" resultType="Pic">
+	SELECT
+		P_TAG as pTag
+	FROM
+		t_pic
+	WHERE
+		P_FILE_NAME = #{picFileName}
+	AND
+		P_NAME = #{picName}
+	</select>
+	
+	<!-- 修改订单状态为待评价 -->
+	<update id="doGetConfirmReceipt">
+	UPDATE t_product_order
+		SET PO_STATUS = 3,
+		PO_DELIVER_TIME = now()
+	WHERE
+		PO_ID = #{poId}
+	and 
+		U_ID = #{uId}
+	</update>
+	<!-- 插入图片信息 -->
+	<insert id="doAddPic" parameterType="Map">
+	INSERT INTO t_pic
+		VALUES
+	(
+		UUID(),
+		#{pFileName},
+		#{pName},
+		#{pNo},
+		#{pTag},
+		NOW(),
+		''
+	)
+	</insert>
+	
+	<!--获取店铺商品类别信息 -->
+	<select id="doGetStoreProductBySId" resultType="Product">
+	SELECT
+		PTD_ID AS ptdId
+	FROM
+		t_product
+	WHERE
+		S_ID = #{sId}
+	AND P_DEL = 0
+	</select>
+	
+	<!-- 获取某用户在某店铺内浏览过的商品主键标识列表 -->
+	<select id="doGetStoreProductListFromUserFootprint" resultType="UserFootprint">
+		SELECT
+			P_ID AS pId
+		FROM
+			t_user_footprint
+		WHERE
+			U_ID = #{uId}
+		AND P_ID IN (
+			SELECT
+				P_ID
+			FROM
+				t_product
+			WHERE
+				S_ID = #{sId}
+		)
+		ORDER BY
+			UF_CREATE_TIME DESC
+		LIMIT 5
+	</select>
+	
+	<!-- 获取商品是否被删除 -->
+	<select id="getProductIsDel" resultType="Product">
+		SELECT
+			P_DEL AS pDel
+		FROM
+			t_product
+		WHERE
+			P_ID = #{pId}
+	</select>
+	
+</mapper>

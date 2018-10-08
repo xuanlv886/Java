@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.service.extra.mall.mapper.StoreMapper">
+	
+	<!-- 查询店铺信息 -->
+	<select id="doGetStoreInfo" resultType="Store">
+	SELECT
+		S_ID AS sId,
+		S_TYPE AS sType,
+		S_NAME AS sName,
+		P_TAG AS pTag,
+		S_DESCRIBE AS sDescribe,
+		AC_ID AS acId,
+		S_LEADER AS sLeader,
+		S_LEADER_IDCARD AS sLeaderIdCard,
+		S_LEGAL AS sLegal,
+		S_LEGAL_IDCARD AS sLegalIdCard,
+		S_LEADER_PIC AS sLeaderPic,
+		S_LEGAL_PIC AS sLegalPic,
+		S_BUSINESS_LICENSE_PIC AS sBuinessLicensePic,
+		S_TEL AS sTel,
+		S_CREATE_TIME AS sCreateTime,
+		S_ADDRESS AS sAddress,
+		S_LON AS sLon,
+		S_LAT AS sLat,
+		S_WEIGHT AS sWeight,
+		S_BOOTH_NUM AS sBoothNum,
+		S_LEFT_BOOTH_NUM AS sLeftBoothNum,
+		S_REQUIREMENT_SERVICE_CHARGE AS sRequirementServiceCharge,
+		S_ORDER_LIMINT AS sOrderLimint,
+		S_PRODUCT_SERVICE_CHARGE AS sProductServiceCharge,
+		S_CHECKED AS sChecked,
+		S_LEVEL AS sLevel,
+		U_ID AS uId,
+		S_CHECKED_TIME AS sCheckedTime,
+		S_CHECKED_OPINION AS sCheckedOpinion
+	FROM
+		t_store
+		where S_ID = #{sId}
+	</select>
+	
+	<!-- 添加商户提现记录 -->
+	<insert id="doApplyToCash">
+		INSERT INTO t_user_to_cash_record
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{uId}, 
+				0,
+				#{utcrMoney},
+				#{psId},
+				#{utcrAccount},
+				NOW()
+			)
+	</insert>
+	
+	<!-- 获取商户提现记录总数 -->
+	<select id="getApplyToCashListCount" resultType="int">
+		SELECT
+		COUNT(0)
+		FROM
+			t_user_to_cash_record
+		WHERE
+			S_ID = #{sId}							
+	</select>
+	
+	<!-- 获取我的钱包 -->
+	<select id="doGetMyWallet" resultType="UserWallet">
+	SELECT
+		UW_ID AS uwId,
+		S_ID AS sId,
+		UW_LEFT_MONEY AS uwLeftMoney,
+		UW_DEPOSIT AS uwDeposit,
+		UW_APPLY_TO_CASH AS uwApplyToCash,
+		UW_ALREADY_TO_CASH AS uwAlreadyToCash
+	FROM
+		t_user_wallet
+	WHERE
+		S_ID = #{sId}
+	</select>
+	
+	<!-- 修改商户钱包可用余额接口 -->
+	<update id="changeUserWalletOfLeftMoney">
+		UPDATE t_user_wallet
+		SET UW_LEFT_MONEY = #{uwLeftMoney},
+ 		UW_APPLY_TO_CASH = #{uwApplyToCash}
+		WHERE S_ID = #{sId}
+	</update>
+	
+	<!-- 缴纳保障金 -->
+	<insert id="doGetPayDepositMoney">
+		INSERT INTO t_user_deposit_record
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{uId},
+				#{status},
+				#{udrMoney},
+				#{psId},
+				now(),
+				''
+			)
+	</insert>
+	
+	<!-- 解冻保障金-->
+	<insert id="doGetThawDepositMoney">
+		INSERT INTO t_user_deposit_record
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				#{uId},
+				#{status},
+				#{udrMoney},
+				'',
+				now(),
+				''
+			)
+	</insert>
+	
+	<!-- 修改用户保障金金额-->
+	<update id="doUpdateUserWalletDeposit">
+		UPDATE t_user_wallet
+			SET 
+			UW_LEFT_MONEY = UW_LEFT_MONEY
+			<if test='status == 2'>
+			+
+			</if>
+			#{udrMoney},
+			UW_DEPOSIT = UW_DEPOSIT 
+			<if test='status == 0'>
+			+
+			</if>
+			<if test='status == 2'>
+			-
+			</if>
+			#{udrMoney}
+			WHERE
+				S_ID = #{sId}
+	</update>
+	
+	<!-- 修改用户余额-->
+	<update id="doUpdateUserWalletLeftMoney">
+		UPDATE t_user_wallet
+			SET 
+			UW_LEFT_MONEY = UW_LEFT_MONEY 
+			<if test='status == 0'>
+			+
+			</if>
+			<if test='status == 1'>
+			-
+			</if>
+			#{receivingMoney}
+			WHERE
+				S_ID = #{sId}
+	</update>
+	
+	<!-- 插入商户信息 -->
+	<insert id="doAddStoreInfo">
+		INSERT INTO t_store
+		VALUES
+			(
+				#{sId},
+				#{sType},
+				#{sName},
+				UUID(),
+				'',
+				#{acId},
+				#{sLeader},
+				#{sLeaderIdCard},
+				#{sLegal},
+				#{sLegalIdCard},
+				#{sLeaderPic},
+				#{sLegalPic},
+				#{sBuinessLicensePic},
+				#{sTel},
+				now(),
+				#{sAddress},
+				#{sLon},
+				#{sLat},
+				0,
+				0,
+				0,
+				'',
+				0,
+				'',
+				#{sChecked},
+				0,
+				'',
+				'',
+				''
+			)
+	</insert>
+	
+	<!-- 添加店铺申请接单 -->
+	<insert id="doAddStoreApplyRequirement">
+		INSERT INTO t_store_apply_requirement
+		VALUES
+			(
+				UUID(),
+				#{roId},
+				#{sId},
+				#{quotedPrice},
+				0,
+				now()
+			)
+	</insert>
+	
+	<!-- 添加店铺安排-->
+	<insert id="doAddStoreArrange">
+		INSERT INTO t_store_arrange
+		VALUES
+			(
+				UUID(),
+				#{saContent},
+				#{uId},
+				now(),
+				#{sId}
+			)
+	</insert>
+	
+	<!-- 删除店铺安排 -->
+	<delete id="doDelStoreArrange" >
+	DELETE
+		FROM
+	t_store_arrange
+		WHERE
+		SA_ID = #{saId}
+	</delete>
+	
+	<!-- 修改商户我的安排接口 -->
+	<update id="doUpdateMyArrange">
+		UPDATE t_store_arrange
+		SET SA_CONTENT = #{saContent}
+		WHERE
+			SA_ID = #{saId}
+	</update>
+	
+	<!-- 获取我的店铺安排-->
+	<select id="doGetMyArranges" resultType="StoreArrange">
+	SELECT
+		SA_ID AS saId,
+		SA_CONTENT AS saContent,
+		U_ID AS uId,
+		SA_CREATE_TIME AS saCreateTime,
+		S_ID AS sId
+	FROM
+		`t_store_arrange`
+	WHERE
+		U_ID = #{uId} AND S_ID = #{sId}
+	</select>
+	
+	<!-- 删除商户申请接单表 -->
+	<delete id="doCancelStoreRequirement" >
+	DELETE
+		FROM
+	t_store_apply_requirement
+		WHERE
+		RO_ID = #{roId} AND S_ID = #{sId}
+	</delete>
+	
+	<!-- 获取所有提现记录-->
+	<select id="doGetAllAlreadyCashRecord" resultType="UserToCashRecord">
+	SELECT
+		UTCR_ID AS utcrId,
+		S_ID AS sId,
+		U_ID AS uId,
+		UTCR_STATUS AS utcrStatus,
+		UTCR_MONEY AS utcrMoney,
+		PS_ID AS psId,
+		UTCR_ACCOUNT AS utcrAccount,
+		UTCR_CREATE_TIME AS utcrCreateTime
+	FROM
+		t_user_to_cash_record 
+	WHERE
+		S_ID = #{sId} and U_ID =#{uId}
+		ORDER BY
+			UTCR_CREATE_TIME DESC
+		LIMIT #{i},
+				#{j}
+	</select>
+	
+	<!-- 删除商户申请接单表根据roId -->
+	<delete id="doDelStoreApplyRequirement" >
+	DELETE
+		FROM
+	t_store_apply_requirement
+		WHERE
+		RO_ID = #{roId} 
+	</delete>
+	
+	<!-- 移除申请接单店铺根据roId和sId -->
+	<delete id="doDeleteStoreApplyRequirement" >
+	DELETE
+		FROM
+			t_store_apply_requirement
+		WHERE
+			RO_ID = #{roId} 
+		AND
+			S_ID = #{sId}
+	</delete>
+	<!-- 移除其他申请接单店铺根据roId和sId -->
+	<delete id="doDeleteOtherStoreApplyRequirement" >
+	DELETE
+		FROM
+			t_store_apply_requirement
+		WHERE
+			RO_ID = #{roId} 
+		AND
+			S_ID != #{sId}
+	</delete>
+	
+	<!-- 修改店铺信息-->
+	<update id="doUpdateStoreApplyRequirement">
+		UPDATE t_store_apply_requirement
+			SET 
+			SAR_STATUS = #{status}
+			WHERE
+				S_ID = #{sId} 
+			AND 
+				RO_ID = #{roId}
+	</update>
+	
+	<!-- 根据roId和sId获取商铺申请接单信息-->
+	<select id="doGetStoreApplyRequirement" resultType="StoreApplyRequirement">
+	SELECT
+		SAR_ID AS sarId,
+		RO_ID AS roId,
+		S_ID AS sId,
+		SAR_PRICE AS sarPrice,
+		SAR_CREATE_TIME AS sarCreateTime
+	FROM
+		t_store_apply_requirement
+	WHERE
+		RO_ID = #{roId} AND S_ID = #{sId}
+	</select>
+	<!-- 根据roId获取所有申请接单的商铺信息-->
+	<select id="doGetAllStoreApplyRequirement" resultType="StoreApplyRequirement">
+	SELECT
+		SAR_ID AS sarId,
+		RO_ID AS roId,
+		S_ID AS sId,
+		SAR_PRICE AS sarPrice,
+		SAR_CREATE_TIME AS sarCreateTime
+	FROM
+		t_store_apply_requirement
+	WHERE
+		RO_ID = #{roId} 
+	</select>
+	<!-- 获取我的店铺安排数量-->
+	<select id="doGetMyArrangesNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_store_arrange
+	WHERE
+		U_ID = #{uId} 
+	AND S_ID = #{sId}
+	</select>
+	
+	<!-- 获取店铺申请订单数量-->
+	<select id="doGetStoreApplyRequirementNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		`t_store_apply_requirement`
+	WHERE
+		RO_ID = #{roId}
+	</select>
+	
+	<!-- 修改店铺信息-->
+	<update id="doUpdateStoreInfo">
+		UPDATE t_store
+			SET 
+			S_NAME = #{sName},
+			S_DESCRIBE = #{sDescribe},
+			S_TEL = #{sTel},
+			S_ADDRESS = #{sAddress}
+			WHERE
+				S_ID = #{sId} 
+	</update>
+	
+	<!-- 根据关键字搜索店铺 -->
+	<select id="doSelectStoreBylooseName" resultType="Store">
+	SELECT
+		S_ID AS sId,
+		S_TYPE AS sType,
+		S_NAME AS sName,
+		P_TAG AS pTag,
+		S_DESCRIBE AS sDescribe,
+		AC_ID AS acId,
+		S_LEADER AS sLeader,
+		S_LEADER_IDCARD AS sLeaderIdCard,
+		S_LEGAL AS sLegal,
+		S_LEADER_IDCARD AS sLeader,
+		S_LEADER_PIC AS sLeaderPic,
+		S_LEGAL_PIC AS sLegalPic,
+		S_BUSINESS_LICENSE_PIC AS sBuinessLicensePic,
+		S_TEL AS sTel,
+		S_CREATE_TIME AS sCreateTime,
+		S_ADDRESS AS sAddress,
+		S_LON AS sLon,
+		S_LAT AS sLat,
+		S_WEIGHT AS sWeight,
+		S_BOOTH_NUM AS sBoothNum,
+		S_LEFT_BOOTH_NUM AS sLeftBoothNum,
+		S_REQUIREMENT_SERVICE_CHARGE AS sRequirementServiceCharge,
+		S_ORDER_LIMINT AS sOrderLimint,
+		S_PRODUCT_SERVICE_CHARGE AS sProductServiceCharge,
+		S_CHECKED AS sChecked,
+		S_LEVEL AS sLevel,
+		U_ID AS uId,
+		S_CHECKED_TIME AS sCheckedTime,
+		S_CHECKED_OPINION AS sCheckedOpinion
+	FROM
+		t_store
+		where S_NAME like '%${looseName}%' limit #{start},#{end}
+	</select>
+	
+	<!-- 获取某城市内推荐店铺的数量-->
+	<select id="doGetRecommendStoreCount" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_recommend_store
+	WHERE
+	S_ID IN (
+		SELECT
+			S_ID
+		FROM
+			t_store
+		WHERE
+			AC_ID = #{acId}
+		AND 
+			S_CHECKED = 1
+	)
+	</select>
+	
+	<!-- 获取推荐店铺信息-->
+	<select id="doGetRecommendStore" resultMap="doGetRecommendStore">
+	SELECT
+		t1.RS_ID,
+		t1.S_ID,
+		t1.RS_TITLE,
+		t1.RS_CONTENT,
+		t1.P_TAG,
+		t1.U_ID,
+		t1.RS_CREATE_TIME,
+		t2.P_NAME,
+		t2.P_ID
+	FROM
+		t_recommend_store t1
+	LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG
+	LEFT JOIN t_store t3 ON t3.S_ID = t1.S_ID
+	WHERE t3.AC_ID =#{acId} AND t2.P_NO = 0
+	AND t1.S_ID IN (
+	SELECT
+		S_ID
+	FROM
+		t_store
+	WHERE
+		S_CHECKED = 1
+	)
+	 LIMIT #{min}, #{max}
+	</select>
+	<resultMap type="RecommendStore" id="doGetRecommendStore">
+		<id column="RS_ID" property="rsId" />
+		<result column="S_ID" property="sId"/>
+		<result column="RS_TITLE" property="rsTitle"/>
+		<result column="RS_CONTENT" property="rsContent"/>
+		<result column="U_ID" property="uId"/>
+		<result column="P_TAG" property="pTag"/>
+		<result column="RS_CREATE_TIME" property="rsCreateTime"/>
+		<association property="pic" javaType="Pic">
+			<id column="P_ID" property="pId" />
+			<result column="P_NAME" property="pName" />
+		</association>
+	</resultMap>
+	
+	<!-- 获取处于取货中、待验货、送货中状态的需求订单列表 -->
+	<select id="getRequirementOrderListWhichSatisfyCondition" resultType="RequirementOrder">
+		SELECT
+			RO_ID AS roId
+		FROM
+			t_requirement_order
+		WHERE
+			S_ID = #{sId}
+		AND RO_STATUS IN (3, 4, 5)
+	</select>
+	
+	<!-- 添加移动轨迹接口 -->
+	<insert id="addMovingTrajectoryPoint">
+		INSERT INTO t_moving_trajectory
+		VALUES
+			(UUID(), #{mtLon}, #{mtLat}, NOW(), #{roId})
+	</insert>
+	
+	<update id="merchantSend">
+		update t_product_order
+		SET
+		PO_SEND_TIME = now(),
+		PO_DELIVER_COMPANY = #{poDeliverCompany}, 
+		PO_DELIVER_CODE = #{poDeliverCode} 
+		where 
+		PO_ID = #{poId}
+	</update>
+	<!-- 根据psId获取支付名 -->
+	<select id="getPayStyleByPsId" resultType="PayStyle">
+		SELECT
+			PS_NAME AS psName
+		FROM
+			t_pay_style
+		WHERE
+			PS_ID = #{psId}
+	</select>
+	
+	<!-- 获取某需求订单的评价 -->
+	<select id="getRequirementOrderEvaluate" resultType="RequirementOrderEvaluate">
+		SELECT
+			ROE_LEVEL AS roeLevel,
+			ROE_CONTENT AS roeContent,
+			ROE_CREATE_TIME AS roeCreateTime
+		FROM
+			t_requirement_order_evaluate
+		WHERE
+			RO_ID = #{roId}
+	</select>
+	
+</mapper>

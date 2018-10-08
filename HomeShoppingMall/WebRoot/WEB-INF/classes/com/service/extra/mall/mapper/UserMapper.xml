@@ -1,0 +1,1289 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.service.extra.mall.mapper.UserMapper">
+	
+	<!-- 查询用户是否存在 -->
+	<select id="doUserLogin" resultType="User">
+	SELECT
+		U_ID as uId,
+		UR_ID as urId,
+		U_TEL as uTel,
+		U_ACCID as uAccid,
+		U_TOKEN as uToken,
+		S_ID as sId,
+		U_PHONE_ID as uPhoneId
+	FROM
+		`t_user`
+	WHERE
+		U_ACCOUNT = #{uAccount}
+	AND U_PASSWORD = #{uPassword}
+	</select>
+	
+	<!-- 查询用户角色根据用户角色主键标识 -->
+	<select id="doGetUserRoleByUrId" resultType="UserRole">
+	SELECT
+		UR_ID AS urId,
+		UR_NAME AS urName
+	FROM
+		`t_user_role`
+	WHERE
+		UR_ID = #{urId}
+	</select>
+	
+	<!-- 查询用户角色 -->
+	<select id="doGetUserRole" resultType="UserRole">
+	SELECT
+		UR_ID AS urId,
+		UR_NAME AS urName
+	FROM
+		`t_user_role`
+	</select>
+	
+	<!-- 插入用户信息接口 -->
+	<insert id="doAddCustomer">
+		INSERT INTO t_user
+		VALUES
+			(
+				#{uId},
+				#{urId},
+				#{uAccid},
+				#{uToken},
+				#{uAccount},
+				#{uPassword},
+				#{uNickName},
+				#{uSex},
+				'',
+				'',
+				UUID(),
+				#{uTel},
+				'',
+				#{uTrueName},
+				#{uPhoneId},
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
+				#{sId},
+				NOW()
+			)
+	</insert>
+	
+	<!-- 获取用户信息 -->
+	<select id="doGetUserInfoByUId" resultType="User">
+	SELECT
+		U_ID as uId,
+		UR_ID as urId,
+		U_ACCOUNT as uAccount,
+		U_PASSWORD as uPassword,
+		U_ACCID as uAccid,
+		U_TOKEN as uToken,
+		U_NICKNAME as uNickName,
+		U_SEX as uSex,
+		U_EMAIL as uEmail,
+		U_BIRTHDAY as uBirthday,
+		P_TAG as pTag,
+		U_TEL as uTel,
+		U_PAY_CODE as uPayCode,
+		U_TRUE_NAME as uTrueName,
+		U_PHONE_ID as uPhoneId,
+		U_FIRST_SQ_ID as uFirstSqId,
+		U_FIRST_SQ_ANSWER as uFirstSqAnswer,
+		U_SECOND_SQ_ID as uSecondSqId,
+		U_SECOND_SQ_ANSWER as uSecondSqAnswer,
+		U_THIRD_SQ_ID as uThirdSqId,
+		U_THIRD_SQ_ANSWER as uThirdSqAnswer,
+		S_ID as sId,
+		U_CREATE_TIME as uCreateTime
+	FROM
+		`t_user`
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 获取用户信息 -->
+	<select id="doGetUserInfoBySId" resultType="User">
+	SELECT
+		U_ID as uId,
+		UR_ID as urId,
+		U_ACCOUNT as uAccount,
+		U_ACCID as uAccid,
+		U_TOKEN as uToken,
+		U_PASSWORD as uPassword,
+		U_NICKNAME as uNickName,
+		U_SEX as uSex,
+		U_EMAIL as uEmail,
+		U_BIRTHDAY as uBirthday,
+		P_TAG as pTag,
+		U_TEL as uTel,
+		U_PAY_CODE as uPayCode,
+		U_TRUE_NAME as uTrueName,
+		U_PHONE_ID as uPhoneId,
+		U_FIRST_SQ_ID as uFirstSqId,
+		U_FIRST_SQ_ANSWER as uFirstSqAnswer,
+		U_SECOND_SQ_ID as uSecondSqId,
+		U_SECOND_SQ_ANSWER as uSecondSqAnswer,
+		U_THIRD_SQ_ID as uThirdSqId,
+		U_THIRD_SQ_ANSWER as uThirdSqAnswer,
+		S_ID as sId,
+		U_CREATE_TIME as uCreateTime
+	FROM
+		`t_user`
+	WHERE
+		S_ID = #{sId}
+	</select>
+	
+	<!-- 修改用户密码-->
+	<update id="doUpdateUserPassword">
+		UPDATE t_user
+			SET U_PASSWORD = #{uNewPassword}
+			WHERE
+				U_ID = #{uId}
+	</update>
+	
+	<!-- 设置用户密保-->
+	<update id="doUpdateUserSecretQuestion">
+		UPDATE t_user
+			SET U_FIRST_SQ_ID = #{uFirstSqId},
+			 U_FIRST_SQ_ANSWER = #{uFirstSqAnswer},
+			 U_SECOND_SQ_ID = #{uSecondSqId},
+			 U_SECOND_SQ_ANSWER = #{uSecondSqAnswer},
+			 U_THIRD_SQ_ID = #{uThirdSqId},
+			 U_THIRD_SQ_ANSWER = #{uThirdSqAnswer}
+			WHERE
+				U_ID = #{uId}
+	</update>
+	
+	<!-- 根据安全问题位置获取安全问题信息 -->
+	<select id="doGetSafetyQuestion" resultType="SafetyQuestion">
+	SELECT
+		SQ_ID AS sqId,
+		SQ_NAME AS sqName,
+		SQ_POSITION AS sqPosition
+	FROM
+		t_safety_question
+	WHERE
+		SQ_POSITION = #{sqPosition}
+	</select>
+	
+	<!-- 修改用户信息-->
+	<update id="doUpdateUserInfo">
+		UPDATE t_user
+			SET U_NICKNAME = #{uNickName},
+			 U_SEX = #{uSex},
+			 U_EMAIL = #{uEmail},
+			 U_BIRTHDAY = #{uBirthday}
+			WHERE
+				U_ID = #{uId}
+	</update>
+	
+	<!-- 根据图片pTag获取图片信息 -->
+	<select id="doGetPicInfoByPTag" resultType="Pic">
+	SELECT
+		P_ID AS pId,
+		P_FILE_NAME AS pFileName,
+		P_NAME AS pName,
+		P_NO AS pNo,
+		P_TAG AS pTag,
+		P_CREATE_TIME AS pCreateTime,
+		P_JUMP AS pJump
+	FROM
+		t_pic
+	WHERE
+		P_TAG = #{pTag}
+	ORDER BY
+		P_NO ASC
+	</select>
+	
+	<!-- 修改用户头像信息-->
+	<update id="doUpdateUserAvatar">
+		UPDATE t_pic
+			SET P_NAME = #{pName}
+			WHERE
+				P_ID = #{pId}
+	</update>
+	
+	<!-- 根据用户主键标识获取用户收货地址 -->
+	<select id="doGetUserDeliverAddress" resultType="UserDeliverAddress">
+	SELECT
+		UDA_ID AS udaId,
+		U_ID AS uId,
+		UDA_TRUE_NAME AS udaTrueName,
+		UDA_TEL udaTel,
+		UDA_ADDRESS udaAddress,
+		UDA_DEFAULT udaDefault
+	FROM
+		`t_user_deliver_address`
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 添加用户收货地址接口 -->
+	<insert id="doAddUserDeliverAddress">
+		INSERT INTO t_user_deliver_address
+		VALUES
+			(
+				UUID(),
+				#{uId},
+				#{udaTrueName},
+				#{udaTel},
+				#{udaAddress},
+				#{def}
+			)
+	</insert>
+	
+	<!-- 删除收货地址-->
+	<delete id="doDelUserDeliverAddress">
+	delete from t_user_deliver_address where U_ID = #{uId} AND UDA_ID = #{udaId} 
+	</delete>
+	
+	<!-- 修改用户收货地址信息-->
+	<update id="doUpdateUserDeliverAddress">
+		UPDATE t_user_deliver_address
+			SET UDA_TRUE_NAME = #{udaTrueName},
+			 UDA_TEL = #{udaTel},
+			 UDA_ADDRESS = #{udaAddress}
+			WHERE
+				U_ID = #{uId} AND UDA_ID = #{udaId}
+	</update>
+	
+	<!-- 获取用户默认地址信息 -->
+	<select id="doGetDefaultUserDeliverAddress" resultType="UserDeliverAddress">
+	SELECT
+		UDA_ID AS udaId,
+		U_ID AS uId,
+		UDA_TRUE_NAME AS udaTrueName,
+		UDA_TEL udaTel,
+		UDA_ADDRESS udaAddress,
+		UDA_DEFAULT udaDefault
+	FROM
+		`t_user_deliver_address`
+	WHERE
+		U_ID = #{uId} and
+		UDA_DEFAULT = 1
+	</select>
+	
+	<!-- 设置默认收货地址-->
+	<update id="deleteDefaultUserDeliverAddress">
+		UPDATE t_user_deliver_address
+			SET UDA_DEFAULT = #{def}
+			WHERE
+				UDA_ID = #{udaId}
+	</update>
+	
+	<!-- 查询用户关注店铺 -->
+	<select id="doGetUserAttention" resultMap="doGetUserAttention">
+	SELECT
+		t1.UA_ID,
+		t1.U_ID,
+		t2.S_ID,
+		t1.UA_CREATE_TIME,
+		t2.S_NAME,
+		t2.S_LEVEL,
+		t3.P_NAME,
+		t3.P_ID
+	FROM
+		t_user_attention t1
+	LEFT JOIN t_store t2 ON t2.S_ID = t1.S_ID
+	LEFT JOIN t_pic t3 ON t3.P_TAG = t2.P_TAG
+	WHERE
+		t1.U_ID = #{uId} AND t3.P_NO = 0
+		limit #{status},#{end}
+	</select>
+	<resultMap type="UserAttention" id="doGetUserAttention">
+		<id column="UA_ID" property="uaId" />
+		<result column="U_ID" property="uId"/>
+		<result column="UA_CREATE_TIME" property="uaCreateTime"/>
+		<association property="store" javaType="Store">
+			<id column="S_ID" property="sId" />
+			<result column="S_NAME" property="sName" />
+			<result column="S_LEVEL" property="sLevel" />
+			<association property="pic" javaType="Pic">
+				<id column="P_ID" property="pId" />
+				<result column="P_NAME" property="pName" />
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 添加用户关注店铺 -->
+	<insert id="doAddUserAttention">
+		INSERT INTO t_user_attention
+		VALUES
+			(
+				UUID(),
+				#{uId},
+				#{sId},
+				now()
+			)
+	</insert>
+	
+	<!-- 取消用户关注店铺-->
+	<delete id="doDelUserAttention">
+	delete from t_user_attention where U_ID = #{uId} AND S_ID = #{sId} 
+	</delete>
+	
+	<!-- 查询商品是否存在购物车-->
+	<select id="doSelectUserTrolley" resultType="UserTrolley">
+	SELECT
+		UT_ID AS utId,
+		U_ID AS uId,
+		P_ID AS pId,
+		S_ID AS sId,
+		UT_PRODUCT_NUM AS utProductNum,
+		UT_PRODUCT_PROPERTY AS utProductProperty,
+		UT_CREATE_TIME AS utCreateTime
+	FROM
+		t_user_trolley
+	WHERE
+		U_ID = #{uId} 
+		AND P_ID = #{pId} 
+		AND S_ID = #{sId} 
+		AND UT_PRODUCT_PROPERTY = #{utProductProperty}
+	</select>
+	
+	<!-- 添加商品到购物车-->
+	<insert id="doAddUserTrolley">
+		INSERT INTO t_user_trolley
+		VALUES
+			(
+				UUID(),
+				#{uId},
+				#{pId},
+				#{sId},
+				#{utProductNum},
+				#{utProductProperty},
+				now()
+			)
+	</insert>
+	
+	<!-- 修改购物车商品数量-->
+	<update id="doUpdateUserTrolleyProductNum">
+		UPDATE t_user_trolley
+			SET UT_PRODUCT_NUM = #{utProductNum} + UT_PRODUCT_NUM
+			WHERE
+				UT_ID = #{utId} 
+	</update>
+	
+	<!-- 删除购物车商品-->
+	<delete id="doDelUserTrolley">
+	delete from t_user_trolley where UT_ID = #{utId} AND U_ID = #{uId}   
+	</delete>
+	
+	<!-- 删除购物车商品-->
+	<delete id="doDeleteUserTrolley">
+	delete from 
+		t_user_trolley 
+	where 
+		U_ID = #{uId} 
+	AND 
+		S_ID = #{sId}
+	AND
+		P_ID = #{pId}   
+	AND
+		UT_PRODUCT_PROPERTY = #{podProperty}
+	</delete>
+	<!-- 根据用户id获取用户所有的购物车商品信息-->
+	<select id="doGetUserTrolleyByUid" resultType="UserTrolley">
+	SELECT
+		UT_ID AS utId,
+		U_ID AS uId,
+		P_ID AS pId,
+		S_ID AS sId,
+		UT_PRODUCT_NUM AS utProductNum,
+		UT_PRODUCT_PROPERTY AS utProductProperty,
+		UT_CREATE_TIME AS utCreateTime
+	FROM
+		t_user_trolley 
+	WHERE
+		U_ID = #{uId}
+	</select> 
+	<!-- 获取用户所有的购物车商品信息-->
+	<select id="doGetUserTrolley" resultMap="doGetUserTrolley">
+	SELECT
+		t1.UT_ID,
+		t1.U_ID,
+		t2.P_ID,
+		t3.P_ID as picId,
+		t4.S_ID,
+		t1.UT_PRODUCT_NUM,
+		t1.UT_PRODUCT_PROPERTY,
+		t1.UT_CREATE_TIME,
+		t2.P_NAME,
+		t2.P_NOW_PRICE,
+		t2.P_ORIGINAL_PRICE,
+		t3.P_NAME as picName,
+		t4.S_NAME
+	FROM
+		t_user_trolley t1
+	LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+	LEFT JOIN t_pic t3 ON t2.P_TAG = t3.P_TAG
+	LEFT JOIN t_store t4 ON t1.S_ID = t4.S_ID
+	WHERE
+		t1.U_ID = #{uId} AND t3.P_NO = 0
+	</select>
+	<resultMap type="UserTrolley" id="doGetUserTrolley">
+		<id column="UT_ID" property="utId" />
+		<result column="UT_PRODUCT_NUM" property="utProductNum"/>
+		<result column="UT_PRODUCT_PROPERTY" property="utProductProperty"/>
+		<result column="UT_CREATE_TIME" property="utCreateTime"/>
+		<result column="U_ID" property="uId"/>
+		<association property="store" javaType="Store">
+			<id column="S_ID" property="sId" />
+			<result column="S_NAME" property="sName" />
+		</association>
+		<association property="product" javaType="Product">
+			<id column="P_ID" property="pId" />
+			<result column="P_NAME" property="pName" />
+			<result column="P_NOW_PRICE" property="pNowPrice" />
+			<result column="P_ORIGINAL_PRICE" property="pOriginalPrice" />
+			<association property="pic" javaType="Pic">
+				<id column="picId" property="pId" />
+				<result column="picName" property="pName" />
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 添加商品收藏-->
+	<insert id="doAddUserCollection">
+		INSERT INTO t_user_collection
+		VALUES
+			(
+				UUID(),
+				#{uId},
+				#{pId},
+				now()
+			)
+	</insert>
+	
+	<!-- 删除商品收藏-->
+	<delete id="doDelUserCollection">
+	delete from t_user_collection where U_ID = #{uId} AND P_ID = #{pId} 
+	</delete>
+	
+	<!-- 获取用户所有的收藏商品信息-->
+	<select id="doGetUserCollection" resultMap="doGetUserCollection">
+	SELECT
+		t1.UC_ID,
+		t1.U_ID,
+		t1.UC_CREATE_TIME,
+		t2.P_ID,
+		t2.P_NAME,
+		t2.P_DESCRIBE,
+		t2.P_NOW_PRICE,
+		t2.P_ORIGINAL_PRICE,
+		t3.P_ID as picId,
+		t3.P_NAME as picName
+	FROM
+		t_user_collection t1
+	LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+	LEFT JOIN t_pic t3 ON t2.P_TAG = t3.P_TAG
+	WHERE
+		t1.U_ID = #{uId} AND t3.P_NO = 0
+		limit #{status},#{end}
+	</select>
+	<resultMap type="UserCollection" id="doGetUserCollection">
+		<id column="UC_ID" property="ucId" />
+		<result column="UC_CREATE_TIME" property="ucCreateTime"/>
+		<result column="U_ID" property="uId"/>
+		<association property="product" javaType="Product">
+			<id column="P_ID" property="pId" />
+			<result column="P_NAME" property="pName" />
+			<result column="P_NOW_PRICE" property="pNowPrice" />
+			<result column="P_DESCRIBE" property="pDescribe" />
+			<result column="P_ORIGINAL_PRICE" property="pOriginalPrice" />
+			<association property="pic" javaType="Pic">
+				<id column="picId" property="pId" />
+				<result column="picName" property="pName" />
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 获取用户足迹信息-->
+	<select id="doGetUserFootPrint" resultMap="doGetUserFootPrint">
+	SELECT
+		t1.UF_ID,
+		t1.U_ID,
+		t1.UF_CREATE_TIME,
+		t2.P_ID,
+		t2.P_NAME,
+		t2.P_DESCRIBE,
+		t2.P_NOW_PRICE,
+		t2.P_ORIGINAL_PRICE,
+		t2.P_TAG
+	FROM
+		t_user_footprint t1
+	LEFT JOIN t_product t2 ON t1.P_ID = t2.P_ID
+	WHERE
+		t1.U_ID = #{uId}
+		limit #{status},#{end}
+	</select>
+	<resultMap type="UserFootprint" id="doGetUserFootPrint">
+		<id column="UF_ID" property="ufId" />
+		<result column="UF_CREATE_TIME" property="ufCreateTime"/>
+		<result column="U_ID" property="uId"/>
+		<association property="product" javaType="Product">
+			<id column="P_ID" property="pId" />
+			<result column="P_NAME" property="pName" />
+			<result column="P_NOW_PRICE" property="pNowPrice" />
+			<result column="P_DESCRIBE" property="pDescribe" />
+			<result column="P_ORIGINAL_PRICE" property="pOriginalPrice" />
+			<result column="P_TAG" property="pTag" />
+		</association>
+	</resultMap>
+	
+	<!-- 删除用户足迹-->
+	<delete id="doDelUserFootPrint">
+		DELETE
+		FROM
+			t_user_footprint
+		WHERE
+			U_ID = #{uId} AND UF_ID = #{ufId} 
+	</delete>
+	
+	<!-- 添加用户意见反馈-->
+	<insert id="doAddUserFeedBack">
+		INSERT INTO t_feedback
+		VALUES
+			(
+				UUID(),
+				#{fType},
+				#{fContent},
+				#{uId},
+				now(),
+				#{fAppType}
+			)
+	</insert>
+	
+	<!-- 获取所有的支付方式-->
+	<resultMap type="PayStyle" id="doGetPayStyle">
+		<id column="PS_ID" property="psId" />
+		<result column="PS_NAME" property="psName"/>
+		<association property="pic" javaType="Pic">
+			<result column="P_NAME" property="picName" />
+		</association>
+	</resultMap>
+	<select id="doGetPayStyle" resultMap="doGetPayStyle">
+		SELECT
+			t1.PS_ID,
+			t1.PS_NAME,
+			t2.P_NAME
+		FROM
+			(
+				SELECT
+					PS_ID,
+					PS_NAME,
+					P_TAG
+				FROM
+					t_pay_style
+			) t1
+		LEFT JOIN t_pic t2 ON t1.P_TAG = t2.P_TAG
+	</select>
+	
+		<!-- 根据uId和密码判断用户是否存在-->
+	<select id="doForgetSecretQuestion" resultType="User">
+	SELECT
+		U_ID as uId,
+		UR_ID as urId,
+		U_ACCOUNT as uAccount,
+		U_PASSWORD as uPassword,
+		U_NICKNAME as uNickName,
+		U_SEX as uSex,
+		U_EMAIL as uEmail,
+		U_BIRTHDAY as uBirthday,
+		P_TAG as pTag,
+		U_TEL as uTel,
+		U_PAY_CODE as uPayCode,
+		U_TRUE_NAME as uTrueName,
+		U_PHONE_ID as uPhoneId,
+		U_FIRST_SQ_ID as uFirstSqId,
+		U_FIRST_SQ_ANSWER as uFirstSqAnswer,
+		U_SECOND_SQ_ID as uSecondSqId,
+		U_SECOND_SQ_ANSWER as uSecondSqAnswer,
+		U_THIRD_SQ_ID as uThirdSqId,
+		U_THIRD_SQ_ANSWER as uThirdSqAnswer,
+		S_ID as sId,
+		U_CREATE_TIME as uCreateTime
+	FROM
+		t_user 
+		where U_ID = #{uId}
+		AND U_PASSWORD = #{uPassword}
+	</select>
+	
+	<!-- 添加图片 -->
+	<insert id="doAddPic">
+		INSERT INTO t_pic
+		VALUES
+			(
+				UUID(),
+				#{pFileName},
+				#{pName},
+				#{pNo},
+				#{pTag},
+				now(),
+				#{pJump}
+			)
+	</insert>
+	
+	<!-- 获取用户收货地址根据rdaId-->
+	<select id="doGetUserDeliverAddressByUdaId" resultType="UserDeliverAddress">
+	SELECT
+		UDA_ID AS udaId,
+		U_ID AS uId,
+		UDA_TRUE_NAME AS udaTrueName,
+		UDA_TEL AS udaTel,
+		UDA_ADDRESS AS udaAddress,
+		UDA_DEFAULT AS udaDefault
+	FROM
+		t_user_deliver_address 
+	WHERE UDA_ID = #{udaId}
+	</select>
+	
+	<!-- 获取用户收藏数量-->
+	<select id="doGetUserCollectionNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_user_collection
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 获取用户足迹数量-->
+	<select id="doGetUserFootPrintNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_user_footprint
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 获取用户关注店铺数量-->
+	<select id="doGetUserAttentionNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_user_attention
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 设置默认收货地址-->
+	<update id="doSetDefaultUserDeliverAddress">
+		UPDATE t_user_deliver_address
+			SET UDA_DEFAULT = #{def}
+			WHERE
+				UDA_ID = #{udaId}
+	</update>
+	
+	<!-- 判断商品是否已经收藏-->
+	<select id="selectUserCollection" resultType="UserCollection">
+	SELECT
+		UC_ID AS ucId,
+		U_ID AS uId,
+		P_ID AS pId,
+		UC_CREATE_TIME AS ucCreateTime
+	FROM
+		t_user_collection
+	WHERE
+		U_ID = #{uId} AND P_ID = #{pId}
+	</select>
+	
+	<!-- 获取用户商品订单评价数量-->
+	<select id="doGetProductOrderEvaluateNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_product_evaluate
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 判断用户是否已经关注店铺 -->
+	<select id="selectUserAttention" resultType="UserAttention">
+	SELECT
+		UA_ID AS uaId,
+		U_ID AS uId,
+		S_ID AS sId,
+		UA_CREATE_TIME AS uaCreateTime
+	FROM
+		t_user_attention
+	WHERE
+		U_ID = #{uId} AND S_ID = #{sId}
+	</select>
+	
+	<!-- 获取用户需求订单评价数量-->
+	<select id="doGetRequirementOrderEvaluateNum" resultType="int">
+	SELECT
+		COUNT(0)
+	FROM
+		t_requirement_order_evaluate
+	WHERE
+		U_ID = #{uId}
+	</select>
+	
+	<!-- 判断商品是否存在用户足迹-->
+	<select id="selectUserFootPrint" resultType="UserFootprint">
+	SELECT
+		UF_ID AS ufId,
+		P_ID AS pId,
+		U_ID AS uId,
+		UF_CREATE_TIME AS UF_CREATE_TIME
+	FROM
+		t_user_footprint
+	WHERE
+		U_ID = #{uId} AND P_ID = #{pId}
+	</select>
+	
+	<!-- 添加用户足迹 -->
+	<insert id="doAddUserFootPrint">
+		INSERT INTO t_user_footprint
+		VALUES
+			(
+				UUID(),
+				#{pId},
+				#{uId},
+				NOW()
+			)
+	</insert>
+	
+	<!-- 判断用户输入的密保问题是否正确 -->
+	<select id="selectUserSecretQuestion" resultType="User">
+	SELECT
+		U_ID as uId,
+		U_FIRST_SQ_ID as uFirstSqId,
+		U_FIRST_SQ_ANSWER as uFirstSqAnswer,
+		U_SECOND_SQ_ID as uSecondSqId,
+		U_SECOND_SQ_ANSWER as uSecondSqAnswer,
+		U_THIRD_SQ_ID as uThirdSqId,
+		U_THIRD_SQ_ANSWER as uThirdSqAnswer,
+		S_ID as sId,
+		U_CREATE_TIME as uCreateTime
+	FROM
+		`t_user`
+	WHERE
+		U_ID = #{uId} AND U_FIRST_SQ_ID = #{uOldFirstSqId}
+		AND U_FIRST_SQ_ANSWER = #{uOldFirstSqAnswer}
+		AND U_SECOND_SQ_ID = #{uOldSecondSqId}
+		AND U_SECOND_SQ_ANSWER = #{uOldSecondSqAnswer}
+		AND U_THIRD_SQ_ID = #{uOldThirdSqId}
+		AND U_THIRD_SQ_ANSWER = #{uOldThirdSqAnswer}
+	</select>
+	
+	<!-- 修改用户密保-->
+	<update id="doUpdateSecretQuestion">
+		UPDATE t_user
+			SET
+			U_FIRST_SQ_ID = #{uNewFirstSqId},
+			U_FIRST_SQ_ANSWER  = #{uNewFirstSqAnswer},
+			U_SECOND_SQ_ID  = #{uNewSecondSqId},
+			U_SECOND_SQ_ANSWER  = #{uNewSecondSqAnswer},
+			U_THIRD_SQ_ID  = #{uNewThirdSqId},
+			U_THIRD_SQ_ANSWER  = #{uNewThirdSqAnswer}
+			WHERE
+				U_ID = #{uId}
+	</update>
+	
+	<!-- 查看商户登录设备是否变更-->
+	<select id="selectUserInfoByUPhoneId" resultType="User">
+	SELECT
+		U_ID as uId,
+		UR_ID as urId,
+		U_ACCOUNT as uAccount,
+		U_PASSWORD as uPassword,
+		U_NICKNAME as uNickName,
+		U_SEX as uSex,
+		U_EMAIL as uEmail,
+		U_BIRTHDAY as uBirthday,
+		P_TAG as pTag,
+		U_TEL as uTel,
+		U_PAY_CODE as uPayCode,
+		U_TRUE_NAME as uTrueName,
+		U_PHONE_ID as uPhoneId,
+		U_FIRST_SQ_ID as uFirstSqId,
+		U_FIRST_SQ_ANSWER as uFirstSqAnswer,
+		U_SECOND_SQ_ID as uSecondSqId,
+		U_SECOND_SQ_ANSWER as uSecondSqAnswer,
+		U_THIRD_SQ_ID as uThirdSqId,
+		U_THIRD_SQ_ANSWER as uThirdSqAnswer,
+		S_ID as sId,
+		U_CREATE_TIME as uCreateTime
+	FROM
+		`t_user`
+	WHERE
+		U_ID= #{uId}
+	AND U_PHONE_ID = #{uPhoneId}
+	</select>
+	
+	<!-- 用户密保验证-->
+	<select id="doGetUserAnswerSecretQuestion" resultType="User">
+	SELECT
+		U_ID as uId,
+		UR_ID as urId,
+		U_ACCOUNT as uAccount,
+		U_PASSWORD as uPassword,
+		U_NICKNAME as uNickName,
+		U_SEX as uSex,
+		U_EMAIL as uEmail,
+		U_BIRTHDAY as uBirthday,
+		P_TAG as pTag,
+		U_TEL as uTel,
+		U_PAY_CODE as uPayCode,
+		U_TRUE_NAME as uTrueName,
+		U_PHONE_ID as uPhoneId,
+		U_FIRST_SQ_ID as uFirstSqId,
+		U_FIRST_SQ_ANSWER as uFirstSqAnswer,
+		U_SECOND_SQ_ID as uSecondSqId,
+		U_SECOND_SQ_ANSWER as uSecondSqAnswer,
+		U_THIRD_SQ_ID as uThirdSqId,
+		U_THIRD_SQ_ANSWER as uThirdSqAnswer,
+		S_ID as sId,
+		U_CREATE_TIME as uCreateTime
+	FROM
+		`t_user`
+	WHERE
+		U_ID= #{uId}
+	AND U_FIRST_SQ_ANSWER = #{firstAnswer}
+	AND U_SECOND_SQ_ANSWER = #{secondAnswer}
+	AND U_THIRD_SQ_ANSWER = #{thirdAnswer}
+	</select>
+	
+	<!-- 修改用户绑定设备主键标识-->
+	<update id="doupdateUserUPhoneId">
+		UPDATE t_user
+			SET
+			U_PHONE_ID  = #{uPhoneId}
+			WHERE
+				U_ID = #{uId}
+	</update>
+	
+	<!-- 获取第一张图片信息 -->
+	<select id="doSelectOnePicInfoByPTag" resultType="Pic">
+	SELECT
+		P_ID AS pId,
+		P_FILE_NAME AS pFileName,
+		P_NAME AS pName,
+		P_NO AS pNo,
+		P_TAG AS pTag,
+		P_CREATE_TIME AS pCreateTime,
+		P_JUMP AS pJump
+	FROM
+		t_pic
+	WHERE
+		P_TAG = #{pTag} AND P_NO = 0
+	limit 1
+	</select>
+	
+	<!-- 获取城市列表信息 -->
+	<select id="doGetCityList" resultMap="doGetCityList">
+	SELECT
+		t1.OC_ID,
+		t1.AC_ID,
+		t1.OC_IS_HOT,
+		t1.OC_CREATE_TIME,
+		t2.AC_CODE,
+		t2.AC_PROVINCE,
+		t2.AC_CITY,
+		t2.AC_NAME,
+		t2.AC_PARENT
+	FROM
+		`t_open_city` t1
+	LEFT JOIN t_areacode t2 ON t1.AC_ID = t2.AC_ID
+	ORDER BY t1.OC_IS_HOT DESC
+	</select>
+	
+	<resultMap type="OpenCity" id="doGetCityList">
+		<id column="OC_ID" property="ocId" />
+		<result column="AC_ID" property="acId"/>
+		<result column="OC_IS_HOT" property="ocIsHot"/>
+		<result column="OC_CREATE_TIME" property="ocCreateTime"/>
+		<association property="areaCode" javaType="AreaCode">
+			<result column="AC_CODE" property="acCode" />
+			<result column="AC_PROVINCE" property="acProvince" />
+			<result column="AC_CITY" property="acCity" />
+			<result column="AC_PARENT" property="acParent" />
+		</association>
+	</resultMap>
+	
+	<!-- 插入用户钱包表 -->
+	<insert id="doAddUserWallet">
+		INSERT INTO t_user_wallet
+		VALUES
+			(
+				UUID(),
+				#{sId},
+				0,
+				0,
+				0,
+				0
+			)
+	</insert>
+	
+	<!-- 判断店铺是否被关注 -->
+	<select id="doGetStoreIfAttention" resultType="UserAttention">
+	SELECT
+		UA_ID AS uaId,
+		U_ID AS uId,
+		S_ID AS sId,
+		UA_CREATE_TIME AS uaCreateTime
+	FROM
+		t_user_attention
+	WHERE
+		U_ID = #{uId} AND S_ID = #{sId}
+	</select>
+	
+	<!-- 判断商品是否被关注 -->
+	<select id="doGetUserIfCollection" resultType="UserCollection">
+	SELECT
+		UC_ID AS ucId,
+		U_ID AS uId,
+		P_ID AS pId,
+		UC_CREATE_TIME AS ucCreateTime
+	FROM
+		t_user_collection
+	WHERE
+		U_ID = #{uId} AND P_ID = #{pId}
+	</select>
+	
+	<!-- 插入消息抄送表 -->
+	<insert id="doAddMessageCopy">
+		INSERT INTO t_msg_copy
+		VALUES
+			(
+				UUID(),
+				#{mcEventType},
+				#{mcConvType},
+				#{mcTo},
+				#{mcFrom},
+				#{mcTimeStamp},
+				#{mcMsgType},
+				#{mcMsgIdClient},
+				#{mcMsgIdServer},
+				#{mcBody}
+			)
+	</insert>
+	
+	<!-- 根据客户端类型获取引导页相关信息接口 -->
+	<select id="doGetGuideInfo" resultType="Guide">
+		SELECT
+			G_EDITION AS gEdition,
+			P_TAG AS pTag
+		FROM
+			t_guide
+		WHERE
+			G_APP_TYPE = #{gAppType}
+	</select>
+	
+	<!-- 查询消息抄送是否存在 -->
+	<select id="doSelectMessage" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_msg_copy
+		WHERE
+			MC_BODY = #{body1}
+		AND MC_FROM = #{fromAccount}
+		AND MC_TO = #{to}
+		AND MC_TIME = #{msgTimestamp}
+	</select>
+	
+	<!-- 根据行政区域代码获取行政区域信息接口 -->
+	<select id="doGetAreaCode" resultType="AreaCode">
+		SELECT
+			AC_ID AS acId,
+			AC_NAME AS acName,
+			AC_PARENT AS acParent
+		FROM
+			t_areacode
+		WHERE
+			AC_CODE = #{acCode}
+	</select>
+	
+		<!-- 获取主页面轮播图片信息 -->
+	<select id="doGetSlidePic" resultType="Pic">
+	SELECT
+		P_ID AS pId,
+		P_FILE_NAME AS pFileName,
+		P_NAME AS pName,
+		P_NO AS pNo,
+		P_TAG AS pTag,
+		P_CREATE_TIME AS pCreateTime,
+		P_JUMP AS pJump
+	FROM
+		t_pic
+	WHERE
+		P_FILE_NAME = 'slide/' 
+	ORDER BY
+		P_NO ASC
+	</select>
+	
+	<!-- 根据uId更新用户设备id -->
+	<update id="msUpdateUserPhoneId">
+		UPDATE t_user SET
+		U_PHONE_ID = #{uPhoneId}
+		WHERE U_ID = #{uId}
+	</update>
+	
+	<!-- 根据uAccount查找用户密码 -->
+	<select id="doRetrievePsw" resultType="User">
+		SELECT
+			U_PASSWORD AS uPassword,
+			U_ACCOUNT AS uAccount
+		FROM
+			t_user
+		WHERE
+			U_ACCOUNT = #{uAccount}
+	</select>
+	
+	<!-- 根据行政区域代码获取行政区域信息接口 -->
+	<select id="doGetSearchCityList" resultType="AreaCode">
+	select 
+		AC_ID AS acId,
+		AC_CODE AS acCode,
+		AC_CITY AS acCity
+	FROM 
+		t_areacode 
+	where
+		AC_CITY like '%${keyWords}%' 
+	AND 
+		AC_ID in (SELECT AC_ID FROM t_open_city ) limit 1
+	</select>
+	
+	<!-- 修改商户身份用户信息-->
+	<update id="doUpdateStoreUserInfo">
+			UPDATE t_user
+			SET U_NICKNAME = #{uNickName},
+			 U_SEX = #{uSex},
+			 U_EMAIL = #{uEmail},
+			 U_BIRTHDAY = #{uBirthday},
+			 U_TEL = #{uTel}
+			WHERE
+				U_ID = #{uId}
+	</update>
+	
+	<!-- 修改商户店铺相关信息 -->
+	<update id="updateStoreInfo">
+		UPDATE t_store
+		SET S_NAME = #{sName},
+ 		S_DESCRIBE = #{sDescribe},
+ 		S_TEL = #{sTel}
+		WHERE
+			S_ID = #{sId}
+	</update>
+	
+	<!-- 判断用户是否存在 -->
+	<select id="checkStoreUserExist" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_user
+		WHERE
+			U_ACCOUNT = #{uAccount}
+		AND U_PASSWORD = #{uPassword}
+		AND U_ID = #{uId}
+	</select>
+	
+	<!-- 根据应用类型、系统类型获取最新的应用版本信息接口 -->
+	<select id="getVersionInfo" resultType="Version">
+		SELECT
+			V_ID AS vId,
+			V_CODE AS vCode,
+			V_CREATE_TIME AS vCreateTime,
+			V_IF_MUST AS vIfMust,
+			V_FILE_SIZE AS vFileSize,
+			V_CONTENT AS vContent,
+			V_BUILD_CODE AS BuildCode,
+			V_URL AS vUrl
+		FROM
+			t_version
+		WHERE
+			V_TYPE = #{vType}
+		AND V_SYSTEM_TYPE = #{vSystemType}
+		ORDER BY V_CREATE_TIME DESC LIMIT 1
+	</select>
+	
+	<!-- 根据需求订单主键标识和订单状态查询需求订单 -->
+	<select id="getRequirementOrderInfoByRoIdAndRoStatus" resultType="int">
+		SELECT
+			COUNT(0)
+		FROM
+			t_requirement_order
+		WHERE
+			RO_ID = #{roId}
+		AND RO_STATUS = #{roStatus}
+	</select>
+	
+	<!-- 根据poId查询商品订单订单号poOrderId -->
+	<select id="getPoOrderIdByPoId" resultType="ProductOrder">
+		SELECT
+			PO_ORDER_ID AS poOrderId
+		FROM
+			t_product_order
+		WHERE
+			PO_ID = #{poId}
+	</select>
+	
+	<!-- 修改商品订单信息 -->
+	<update id="updateProductOrderInfoByPoId">
+		UPDATE t_product_order
+		SET PS_ID = #{psId},
+ 		PO_TOTAL_PRICE = #{poTotalMoney},
+ 		PO_ORDER_ID = #{poOrderId},
+ 		PO_PAY_CODE = #{poOrderId},
+		PO_DELIVER_NAME = #{poDeliverName},
+ 		PO_DELIVER_TEL = #{poDeliverTel},
+ 		PO_DELIVER_ADDRESS = #{poDeliverAddress}
+		WHERE
+			PO_ID = #{poId}
+	</update>
+	
+	<!-- 修改需求订单状态 -->
+	<update id="updateRequirementOrderInfo">
+		UPDATE t_requirement_order
+		SET RO_STATUS = #{roStatus},
+ 		RO_TOTAL_PRICE = #{roTotalPrice},
+ 		S_ID = #{sId},
+ 		RO_ORDER_ID = #{roOrderId},
+ 		RO_CONFIRM_TIME = NOW()
+		WHERE
+			RO_ID = #{roId}
+	</update>
+	
+	<!-- 修改用户需求订单状态-->
+	<update id="doUpdateRequirementOrderStatus">
+		UPDATE t_requirement_order
+			SET RO_STATUS = #{status}
+		WHERE
+			RO_ID = #{roId} 
+	</update>
+	
+	<!-- 获取商品订单信息 -->
+	<select id="getProductOrderInfo" resultType="ProductOrder">
+		SELECT
+			PO_ID AS poId
+		FROM
+			t_product_order
+		WHERE
+			U_ID = #{uId}
+		AND PO_PAY_CODE = #{poPayCode}
+		AND PO_STATUS = 0
+	</select>
+	<!-- 修改商品订单状态 -->
+	<update id="updateProductOrderStatus">
+		UPDATE t_product_order
+ 		SET PO_STATUS = #{poStatus},
+		PO_PAY_TIME = NOW()
+		WHERE
+			PO_ID = #{poId}
+	</update>
+	<!-- 获取商品订单详情接口 -->
+	
+	<!-- 获取用户商品订单详情信息 -->
+	<select id="getProductOrderDetailListByPoId" resultType="ProductOrderDetail">
+	SELECT
+		P_ID AS pId,
+		POD_NUM AS podNum
+	FROM
+		t_product_order_detail
+	WHERE
+		PO_ID = #{poId}
+	</select>
+	
+	<!-- 查询版本信息-->
+	<select id="versionController" resultType="Version">
+	SELECT
+		V_ID as id,
+		V_TYPE as vType,
+		V_CODE as vCode,
+		V_CREATE_TIME as time,
+		V_IF_MUST as ifMust,
+		V_FILE_SIZE as fileSize,
+		V_CONTENT as content,
+		V_BUILD_CODE as buildCode,
+		V_URL as url
+	FROM
+		`t_version`
+	WHERE
+		V_TYPE = #{vType}
+	AND 
+		V_SYSTEM_TYPE = #{phoneType}
+	</select>
+	
+	<!-- 获取某商户针对于特定需求订单的移动轨迹列表接口 -->
+	<select id="doGetMerchantLonLatList" resultType="MovingTrajectory">
+		SELECT
+			MT_LON AS mtLon,
+			MT_LAT AS mtLat
+		FROM
+			t_moving_trajectory
+		WHERE
+			RO_ID = #{roId}
+		ORDER BY
+			MT_CREATE_TIME ASC
+	</select>
+	
+	<!-- 为用户设置备注名 -->
+	<insert id="doSetUserMemoName">
+		INSERT INTO t_user_memo_name
+		VALUES
+			(UUID(), #{umnFromId}, #{umnToId}, #{umnName})
+	</insert>
+	
+	<!-- 获取某用户为别人设置的备注名 -->
+	<select id="doGetUserMemoName" resultType="UserMemoName">
+		SELECT
+			UMN_TO_ID AS umnToId,
+			UMN_NAME AS umnName
+		FROM
+			t_user_memo_name
+		WHERE
+			UMN_FROM_ID = #{uId}
+	</select>
+	<!-- 获取某用户设置的备注名信息 -->
+	<select id="doGetUserMemoNameByUid" resultType="UserMemoName">
+		SELECT
+			UMN_NAME AS umnName
+		FROM
+			t_user_memo_name
+		WHERE
+			UMN_FROM_ID = #{umnFromId}
+		AND
+			UMN_TO_ID = #{umnToId}
+	</select>
+	<!-- 修改用户设置的备注名信息 -->
+	<update id="doUpdataUserMemoName">
+		UPDATE t_user_memo_name
+		SET UMN_NAME = #{umnName}
+		WHERE
+			UMN_FROM_ID = #{umnFromId}
+		AND
+			UMN_TO_ID = #{umnToId}
+	</update>
+	
+	<!-- 根据商品pId删除用户足迹 -->
+	<delete id="delUserFootprintByPid">
+		DELETE
+		FROM
+			t_user_footprint
+		WHERE
+			P_ID = #{pId}
+	</delete>
+	<!-- 根据商品pId删除用户购物车 -->
+	<delete id="delUserTrolleyByPid">
+		DELETE
+		FROM
+			t_user_trolley
+		WHERE
+			P_ID = #{pId}
+	</delete>
+	<!-- 根据商品pId删除用户收藏 -->
+	<delete id="delUserCollectionByPid">
+		DELETE
+		FROM
+			t_user_collection
+		WHERE
+			P_ID = #{pId}
+	</delete>
+</mapper>
